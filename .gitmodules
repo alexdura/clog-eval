@@ -1,3 +1,6 @@
 [submodule "projects/zlib"]
 	path = projects/zlib
 	url = https://github.com/madler/zlib
+[submodule "projects/ffmpeg"]
+	path = projects/ffmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
