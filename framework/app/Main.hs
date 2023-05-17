@@ -2,14 +2,17 @@ module Main (main) where
 
 import Project
 
-import System.Exit
+import System.Directory
+import Development.Shake
 
+import Control.Monad
 
-p1 = Project "zlib" "../projects/zlib" (Just "./configure") "make" []
+projects :: [Project]
+projects = [
+  Project "zlib" "../projects/zlib" (Just "./configure") "bear make -j `nproc`" []
+--  , Project "ffmpeg" "../projects/ffmpeg" (Just "./configure") "bear make -j `nproc`" []
+  ]
 
 main :: IO ()
-main = do
-  exitCode <- buildProject p1
-  case exitCode of
-    ExitSuccess -> print "Build succesful"
-    ExitFailure _ -> print "Exit failure"
+main = forM_ projects $
+  \p -> withCurrentDirectory (path p) $ shakeArgs shakeOptions {shakeVerbosity=Verbose} buildProject'
