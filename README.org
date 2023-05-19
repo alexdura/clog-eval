@@ -1,0 +1,12 @@
+#+TITLE: Clog Evaluation Framework
+
+The main task of this framework is run the Clang Static Analyzer and Clog on the
+same codebase and measure differences between them regarding:
+- report quality
+- runtime performance (time, memory usage)
+
+* How to run
+#+BEGIN_SRC: bash
+cd framework
+stack run
+#+END_SRC
