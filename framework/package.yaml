@@ -27,6 +27,8 @@ dependencies:
 - clang-compilation-database
 - aeson >= 2
 - text
+- optparse-applicative
+- time
 
 ghc-options:
 - -Wall

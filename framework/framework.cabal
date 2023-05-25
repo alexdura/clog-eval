@@ -26,7 +26,10 @@ source-repository head
 library
   exposed-modules:
       CDB
+      ClangStaticAnalyzer
+      ClangTidy
       Config
+      Juliet
       Lib
       Project
   other-modules:
@@ -39,9 +42,11 @@ library
     , base >=4.7 && <5
     , clang-compilation-database
     , directory
+    , optparse-applicative
     , process
     , shake
     , text
+    , time
   default-language: Haskell2010
 
 executable framework-exe
@@ -57,9 +62,11 @@ executable framework-exe
     , clang-compilation-database
     , directory
     , framework
+    , optparse-applicative
     , process
     , shake
     , text
+    , time
   default-language: Haskell2010
 
 test-suite framework-test
@@ -76,7 +83,9 @@ test-suite framework-test
     , clang-compilation-database
     , directory
     , framework
+    , optparse-applicative
     , process
     , shake
     , text
+    , time
   default-language: Haskell2010
