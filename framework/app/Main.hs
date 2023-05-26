@@ -34,7 +34,8 @@ handleOptions (Options _ "project" _) = forM_ projects $
 handleOptions (Options d "juliet" incs) = do
   absIncs <- mapM canonicalizePath incs
   absD <- canonicalizePath d
-  Juliet.generateCompileCommands absD absIncs
+  Juliet.clean absD
+  Juliet.execute absD absIncs ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"]
 
 main :: IO ()
 main = let opts = info (cliOptions <**> helper)
