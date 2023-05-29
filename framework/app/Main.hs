@@ -19,7 +19,9 @@ projects = [
 data Options = Options {
   srcDir :: FilePath,
   mode :: String,
-  incs :: [FilePath]
+  incs :: [FilePath],
+  jar :: FilePath,
+  clogProgram :: FilePath
   }
 
 
@@ -27,15 +29,27 @@ cliOptions = Options
   <$> strOption (long "srcdir" <> metavar "SRC_DIR" <> help "Source directory")
   <*> option auto (long "mode" <> metavar "MODE" <> help "Mode: 'juliet' or 'project'" <> showDefault <> value "juliet")
   <*> option auto (long "include" <> metavar "HEADERS" <> help "Include directories" <> value [])
+  <*> strOption (long "jar" <> metavar "JAR" <> help "Clog jar" <> value "compiler.jar")
+  <*> strOption (long "clog-program" <> metavar "CLOG_PROGRAM" <> help "Clog program")
 
-handleOptions (Options _ "project" _) = forM_ projects $
+handleOptions (Options _ "project" _ _ _) = forM_ projects $
                                       \p -> withCurrentDirectory (Project.path p) $ shake shakeOptions {shakeVerbosity=Verbose} Project.buildProject'
 
-handleOptions (Options d "juliet" incs) = do
+handleOptions (Options d "juliet" incs jar clogp) = do
   absIncs <- mapM canonicalizePath incs
   absD <- canonicalizePath d
-  Juliet.clean absD
-  Juliet.execute absD absIncs ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"]
+  Juliet.clean $ Juliet.defaultJulietOpts absD
+  -- Juliet.runClang $ (Juliet.defaultJulietOpts absD) {
+  --   Juliet.includes = absIncs,
+  --   Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"]
+  --   }
+
+  Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
+    Juliet.includes = absIncs,
+    Juliet.clogXargs = [],
+    Juliet.clogJar = jar,
+    Juliet.clogProgram = clogp
+    }
 
 main :: IO ()
 main = let opts = info (cliOptions <**> helper)

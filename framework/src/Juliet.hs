@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Juliet (execute, clean) where
+module Juliet (runClang, runClog, clean, JulietOpts(..), defaultJulietOpts) where
 
 import Development.Shake
 import Development.Shake.FilePath
@@ -60,29 +60,48 @@ buildCommandObject d incs f =
     CDB.CommandObject (pack d) (pack f) Nothing args (Just $ pack $ f -<.> exe)
 
 
+data JulietOpts = JulietOpts {
+  dir :: FilePath,
+  clangXargs :: [String],
+  clogXargs :: [String],
+  includes :: [FilePath],
+  clogJar :: FilePath,
+  clogProgram :: FilePath
+  }
 
-rules :: FilePath -- ^ The directory
-      -> [FilePath] -- ^ Include directories
-      -> [String] -- ^ Clang analyses to run
-      -> Rules() -- ^ Rules
+defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" ""
 
-rules d incs xargs = do
+
+rules :: JulietOpts -> Rules()
+
+rules opts = do
   "compile_commands.json" %> \out -> do
     c_files <- getDirectoryFiles "." ["//*.c"]
     absCFiles <- liftIO $ mapM canonicalizePath c_files
-    let cdb = buildCommandObject d incs <$> absCFiles
+    let cdb = buildCommandObject opts.dir opts.includes <$> absCFiles
     liftIO $ encodeFile out cdb
 
-  ["_output" </> "analysis.out", "_output" </> "analysis.time"] &%> \[out, time] -> do
+  ["_output" </> "clang.analysis.out", "_output" </> "clang.analysis.time"] &%> \[out, time] -> do
     need ["compile_commands.json"]
     Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
     let files = CDB.file <$> cdb
-    (CmdTime t) <- cmd (FileStdout out)  "clang-tidy" (xargs ++ (unpack <$> files))
+    (CmdTime t) <- cmd (FileStdout out)  "clang-tidy" (opts.clangXargs ++ (unpack <$> files))
     writeFile' time (show t)
 
-  "_output" </> "analysis.csv" %> \out -> do
-    need ["_output/analysis.out"]
-    lines <- readFileLines "_output/analysis.out"
+  ["_output" </> "clog.analysis.csv", "_output" </> "clog.analysis.time"] &%> \[out, time] -> do
+    need ["compile_commands.json"]
+    Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
+    let files = CDB.file <$> cdb
+    (CmdTime t) <- cmd (FileStdout out) "java" "-jar" opts.clogJar "-lang" "c4"
+      "-S" (Prelude.foldr1 (\x y -> x ++ ":" ++ y) ((++ ",A") <$> unpack <$> files))
+      "-D" "_output"
+      opts.clogXargs
+      opts.clogProgram
+    writeFile' time (show t)
+
+  "_output" </> "clang.analysis.csv" %> \out -> do
+    need ["_output/clang.analysis.out"]
+    lines <- readFileLines "_output/clang.analysis.out"
     let reports = fmap (\r -> [file r
                               , show $ line r
                               , show $ col r
@@ -99,13 +118,17 @@ rules d incs xargs = do
     removeFilesAfter "." ["compile_commands.json"]
 
 
-execute :: FilePath -> [FilePath] -> [String] -> IO ()
-execute path incs xargs = withCurrentDirectory path $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-  want ["_output" </> "analysis.csv"]
-  rules path incs xargs
+runClang :: JulietOpts -> IO ()
+runClang opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
+  want ["_output" </> "clang.analysis.csv"]
+  rules opts
+
+runClog opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
+  want ["_output" </> "clog.analysis.csv"]
+  rules opts
 
 
-clean :: FilePath -> IO ()
-clean path = withCurrentDirectory path $ shake shakeOptions {shakeVerbosity=Verbose} $ do
+clean :: JulietOpts -> IO ()
+clean opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
   want ["clean"]
-  rules path [] []
+  rules opts
