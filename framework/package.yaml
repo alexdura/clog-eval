@@ -31,6 +31,8 @@ dependencies:
 - time
 - csv
 - regex-tdfa >= 1.3.2
+- hxt
+- filepath
 
 ghc-options:
 - -Wall

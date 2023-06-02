@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE Arrows, NoMonomorphismRestriction #-}
 
-module Juliet (runClang, runClog, clean, JulietOpts(..), defaultJulietOpts) where
+
+module Juliet (runClang, runClog, clean, JulietOpts(..), defaultJulietOpts, extractReportsXML) where
 
 import Development.Shake
 import Development.Shake.FilePath
@@ -11,7 +13,7 @@ import System.Directory
 import Text.CSV
 import Text.Regex.TDFA
 import Data.Maybe
-
+import Text.XML.HXT.Core
 
 
 ------------------------------ Report ------------------------------
@@ -66,21 +68,24 @@ data JulietOpts = JulietOpts {
   clogXargs :: [String],
   includes :: [FilePath],
   clogJar :: FilePath,
-  clogProgram :: FilePath
+  clogProgramPath :: FilePath,
+  manifest :: FilePath
   }
 
-defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" ""
+defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" "." "."
 
 
 rules :: JulietOpts -> Rules()
 
 rules opts = do
+  -- build the compile commands file needed by the clang static analyzer
   "compile_commands.json" %> \out -> do
     c_files <- getDirectoryFiles "." ["//*.c"]
     absCFiles <- liftIO $ mapM canonicalizePath c_files
     let cdb = buildCommandObject opts.dir opts.includes <$> absCFiles
     liftIO $ encodeFile out cdb
 
+  -- run the Clang static analyzer through clang-tidy
   ["_output" </> "clang.analysis.out", "_output" </> "clang.analysis.time"] &%> \[out, time] -> do
     need ["compile_commands.json"]
     Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
@@ -88,17 +93,32 @@ rules opts = do
     (CmdTime t) <- cmd (FileStdout out)  "clang-tidy" (opts.clangXargs ++ (unpack <$> files))
     writeFile' time (show t)
 
+  -- run the Clog analysis
   ["_output" </> "clog.analysis.csv", "_output" </> "clog.analysis.time"] &%> \[out, time] -> do
     need ["compile_commands.json"]
     Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
     let files = CDB.file <$> cdb
-    (CmdTime t) <- cmd (FileStdout out) "java" "-jar" opts.clogJar "-lang" "c4"
+    (CmdTime t) <- cmd (FileStdout $ "_output" </> "clog.analysis.out") (FileStderr $ "_output" </> "clog.analysis.err")
+      "java" "-jar" opts.clogJar "-lang" "c4"
       "-S" (Prelude.foldr1 (\x y -> x ++ ":" ++ y) ((++ ",A") <$> unpack <$> files))
       "-D" "_output"
       opts.clogXargs
-      opts.clogProgram
+      (opts.clogProgramPath </> "uninitialized_variable.mdl")
     writeFile' time (show t)
 
+  -- clasify the Clog reports between true positive and false positives
+  ["_output" </> "clog.true.positive.csv", "_output" </> "clog.false.positive.csv"] &%> \[_, _] -> do
+    need ["_output" </> "clog.analysis.csv", "compile_commands.json",
+          opts.clogProgramPath </> "function-range.mdl"]
+    Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
+    let files = CDB.file <$> cdb
+    cmd "java" "-jar" opts.clogJar "-lang" "c4"
+      "-S" (Prelude.foldr1 (\x y -> x ++ ":" ++ y) ((++ ",A") <$> unpack <$> files))
+      "-D" "_output"
+      "-F" "_output"
+      (opts.clogProgramPath </> "function-range.mdl")
+
+  -- post-process the output of the Clang static analyzer
   "_output" </> "clang.analysis.csv" %> \out -> do
     need ["_output/clang.analysis.out"]
     lines <- readFileLines "_output/clang.analysis.out"
@@ -124,9 +144,20 @@ runClang opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosi
   rules opts
 
 runClog opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-  want ["_output" </> "clog.analysis.csv"]
+  want $ ("_output" </>) <$> ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
   rules opts
 
+extractReportXML :: ArrowXml a => a XmlTree Report
+extractReportXML = deep (isElem >>> hasName "file") >>>
+  proc x -> do
+    file <- getAttrValue "file" -< x
+    flaw <- deep (isElem >>> hasName "flaw") -< x
+    flawLine <- getAttrValue "line" -< flaw
+    flawName <- getAttrValue "name" -< flaw
+    returnA -< Report file ((read flawLine)::Int) 0 flawName OtherReport
+
+extractReportsXML :: FilePath -> IO [Report]
+extractReportsXML f = runX (readDocument [withValidate no] f >>> extractReportXML)
 
 clean :: JulietOpts -> IO ()
 clean opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
