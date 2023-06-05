@@ -22,24 +22,27 @@ data Options = Options {
   julietDir :: FilePath,
   mode :: String,
   jar :: FilePath,
-  clogProgram :: FilePath
+  clogProgram :: FilePath,
+  julietFilter :: String
   }
 
 
 cliOptions = Options
   <$> strOption (long "srcdir" <> metavar "SRC_DIR" <> help "Source directory")
-  <*> strOption (long "julietdir" <> metavar "JULIET_DIR" <> help "Juliet subdirectory")
+  <*> strOption (long "juliet-dir" <> metavar "JULIET_DIR" <> help "Juliet subdirectory")
   <*> option auto (long "mode" <> metavar "MODE" <> help "Mode: 'juliet' or 'project'" <> showDefault <> value "juliet")
   <*> strOption (long "jar" <> metavar "JAR" <> help "Clog jar" <> value "compiler.jar")
   <*> strOption (long "clog-program" <> metavar "CLOG_PROGRAM" <> help "Clog program path")
+  <*> strOption (long "juliet-filter" <> metavar "JULIET_FILTER" <> help "Juliet filter (regex)")
 
-handleOptions (Options _ _ "project"  _ _) = forM_ projects $
+handleOptions (Options _ _ "project"  _ _ _) = forM_ projects $
                                       \p -> withCurrentDirectory (Project.path p) $ shake shakeOptions {shakeVerbosity=Verbose} Project.buildProject'
 
-handleOptions (Options d jd "juliet" jar clogp) = do
+handleOptions (Options d jd "juliet" jar clogp jf) = do
   absIncs <- mapM canonicalizePath [d </> "testcasesupport"]
   absD <- canonicalizePath $ d </> jd
   absClogP <- canonicalizePath clogp
+  manifestP <- canonicalizePath $ d </> "manifest.xml"
 
   -- Juliet.clean $ Juliet.defaultJulietOpts absD
 
@@ -49,15 +52,17 @@ handleOptions (Options d jd "juliet" jar clogp) = do
   --   }
 
 
-  -- Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
-  --   Juliet.includes = absIncs,
-  --   Juliet.clogXargs = [],
-  --   Juliet.clogJar = jar,
-  --   Juliet.clogProgramPath = absClogP
-  --   }
+  Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
+    Juliet.includes = absIncs,
+    Juliet.clogXargs = [],
+    Juliet.clogJar = jar,
+    Juliet.clogProgramPath = absClogP,
+    Juliet.manifestFilter = jf,
+    Juliet.manifest = manifestP
+    }
 
-  groundTruth <- Juliet.extractReportsXML $ d </> "manifest.xml"
-  print $ show $ length groundTruth
+  -- groundTruth <- Juliet.extractReportsXML $ d </> "manifest.xml"
+  -- print $ show $ head groundTruth
 
 main :: IO ()
 main = let opts = info (cliOptions <**> helper)

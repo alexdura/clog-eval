@@ -41,6 +41,7 @@ library
       aeson >=2
     , base >=4.7 && <5
     , clang-compilation-database
+    , containers
     , csv
     , directory
     , filepath
@@ -64,6 +65,7 @@ executable framework-exe
       aeson >=2
     , base >=4.7 && <5
     , clang-compilation-database
+    , containers
     , csv
     , directory
     , filepath
@@ -89,6 +91,7 @@ test-suite framework-test
       aeson >=2
     , base >=4.7 && <5
     , clang-compilation-database
+    , containers
     , csv
     , directory
     , filepath

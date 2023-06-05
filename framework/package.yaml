@@ -33,6 +33,7 @@ dependencies:
 - regex-tdfa >= 1.3.2
 - hxt
 - filepath
+- containers
 
 ghc-options:
 - -Wall
