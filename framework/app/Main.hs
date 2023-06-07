@@ -46,10 +46,10 @@ handleOptions (Options d jd "juliet" jar clogp jf) = do
 
   -- Juliet.clean $ Juliet.defaultJulietOpts absD
 
-  -- Juliet.runClang $ (Juliet.defaultJulietOpts absD) {
-  --   Juliet.includes = absIncs,
-  --   Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"]
-  --   }
+  Juliet.runClang $ (Juliet.defaultJulietOpts absD) {
+    Juliet.includes = absIncs,
+    Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"]
+    }
 
 
   Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
