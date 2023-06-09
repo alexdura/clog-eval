@@ -14,8 +14,8 @@ import Text.CSV
 import Text.Regex.TDFA
 import Data.Maybe
 import Text.XML.HXT.Core
-import Data.Map.Strict (fromList, toList, (\\), intersection)
 import Text.Printf
+import Data.List
 
 ------------------------------ Report ------------------------------
 
@@ -73,6 +73,7 @@ data JulietOpts = JulietOpts {
   manifest :: FilePath,
   manifestFilter :: String
   }
+  deriving (Show)
 
 defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" "." "." "."
 
@@ -124,8 +125,8 @@ rules opts = do
 
   -- post-process the output of the Clang static analyzer
   "_output" </> "clang.analysis.csv" %> \out -> do
-    need ["_output/clang.analysis.out"]
-    lines <- readFileLines "_output/clang.analysis.out"
+    need ["_output" </> "clang.analysis.out"]
+    lines <- readFileLines $ "_output" </> "clang.analysis.out"
     let reports = fmap (\r -> [file r
                               , show $ line r
                               , show $ col r
@@ -139,13 +140,23 @@ rules opts = do
     need ["_output" </> "clog.analysis.csv", "_output" </> "clang.analysis.csv"]
     clogReport <- liftIO $ extractReportsCSV $ "_output" </> "clog.analysis.csv"
     clangReport <- liftIO $ extractReportsCSV $ "_output" </> "clang.analysis.csv"
+    groundReport <- liftIO $ extractReportsXML opts.manifest
     let normFileName r = r { file = takeFileName r.file }
-        (tp, fp, fn) = compareResultsFileLineOnly (normFileName <$> clangReport) (normFileName <$> clogReport)
+        clangReport' = normFileName <$> clangReport
+        clogReport' = normFileName <$> clogReport
+        groundReport' = filter (\r -> file r =~ opts.manifestFilter) groundReport
+        groundAndClangNotClog = deleteFirstsBy reportEq (intersectBy reportEq groundReport' clangReport') clogReport'
+        clangAndClogNotGround = deleteFirstsBy reportEq (intersectBy reportEq clangReport' clogReport') groundReport'
+        clogNotClangNotGround = deleteFirstsBy reportEq clogReport' (unionBy reportEq clangReport' groundReport')
+        toCsvLine r = [file r, show $ line r, desc r]
     liftIO $ do
-      print "clang/clog compare - clang is the ground truth"
-      print ((printf "True positives %d/%d" (length tp) (length clangReport)) :: String)
-      print ((printf "False positives %d/%d" (length fp) (length clangReport)) :: String)
-      print ((printf "False negatives %d/%d" (length fn) (length clangReport)) :: String)
+      putStrLn "clang/clog compare is the ground truth"
+      putStrLn $ printf "True positives reported by clang and not clog %d" (length groundAndClangNotClog)
+      putStrLn $ printf "False positives where both clang and clog agree %d" (length clangAndClogNotGround)
+      putStrLn $ printf "False negatives reported by clog and not clang %d" (length clogNotClangNotGround)
+    writeFile' "ground-and-clang-not-clog.csv" (printCSV $ map toCsvLine groundAndClangNotClog)
+    writeFile' "clang-and-clog-not-ground.csv" (printCSV $ map toCsvLine clangAndClogNotGround)
+    writeFile' "clog-not-clang-not-ground.csv" (printCSV $ map toCsvLine clogNotClangNotGround)
 
 
   -- phony "stats-clog"
@@ -193,7 +204,7 @@ printStats opts inReport name =
 
 runClang :: JulietOpts -> IO ()
 runClang opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-  want ["_output" </> "clang.analysis.csv"]
+  want ["_output" </> "clang.analysis.out"]
   rules opts
 
 runClog opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
@@ -219,12 +230,13 @@ extractReportsCSV f = do
   Right csv <- parseCSVFromFile f
   return $ fmap (\[f, l, c, err] -> Report f ((read l)::Int) ((read c)::Int) err OtherReport) $ filter (/= [""]) csv
 
-
 clean :: JulietOpts -> IO ()
 clean opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
   want ["clean"]
   rules opts
 
+
+reportEq l r = file l == file r && line l == line r
 
 compareResultsFileLineOnly :: [Report] -- ground truth report
                            -> [Report] -- tool reports
@@ -232,9 +244,6 @@ compareResultsFileLineOnly :: [Report] -- ground truth report
                                [Report], -- false positives
                                [Report]) -- false negatives
 
-compareResultsFileLineOnly g t =
-  let gm = fromList $ map (\r -> ((r.file, r.line), r)) g
-      tm = fromList $ map (\r -> ((r.file, r.line), r)) t
-  in (snd <$> (toList $ intersection tm gm),
-      snd <$> (toList $ tm \\ gm),
-      snd <$> (toList $ gm \\ tm))
+compareResultsFileLineOnly g t = (intersectBy reportEq t g,
+                                  deleteFirstsBy reportEq t g,
+                                  deleteFirstsBy reportEq g t)

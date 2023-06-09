@@ -44,13 +44,12 @@ handleOptions (Options d jd "juliet" jar clogp jf) = do
   absClogP <- canonicalizePath clogp
   manifestP <- canonicalizePath $ d </> "manifest.xml"
 
-  -- Juliet.clean $ Juliet.defaultJulietOpts absD
+  Juliet.clean $ Juliet.defaultJulietOpts absD
 
-  Juliet.runClang $ (Juliet.defaultJulietOpts absD) {
+  let clangOpts = (Juliet.defaultJulietOpts absD) {
     Juliet.includes = absIncs,
-    Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"]
-    }
-
+    Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"] }
+  Juliet.runClang $ clangOpts
 
   Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
     Juliet.includes = absIncs,
@@ -61,8 +60,6 @@ handleOptions (Options d jd "juliet" jar clogp jf) = do
     Juliet.manifest = manifestP
     }
 
-  -- groundTruth <- Juliet.extractReportsXML $ d </> "manifest.xml"
-  -- print $ show $ head groundTruth
 
 main :: IO ()
 main = let opts = info (cliOptions <**> helper)
