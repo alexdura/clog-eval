@@ -6,7 +6,19 @@ same codebase and measure differences between them regarding:
 - runtime performance (time, memory usage)
 
 * How to run
-#+BEGIN_SRC: bash
+#+BEGIN_SRC
 cd framework
-stack run
+
+PATH=/work/projects/llvm-project/build-release/bin/:$PATH LD_LIBRARY_PATH=/work/projects/llvm-project/build-release/lib \
+stack  run -- --srcdir /work/projects/juliet/C \
+--juliet-dir testcases/CWE457_Use_of_Uninitialized_Variable/ \
+--jar /work/projects/metadl/compiler.jar \
+ --clog-program ../clog-programs \
+--juliet-filter "CWE457.*c
+
 #+END_SRC
+
+Since ~--juliet-filter~ selects which reports from the ground truth to compare against, it is important that it refers to same tests as the ones pointed to by ~--juliet-dir~.
+
+* Juliet
+https://github.com/alexdura/juliet

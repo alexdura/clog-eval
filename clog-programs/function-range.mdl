@@ -1,0 +1,20 @@
+EDB('Report, "clog.analysis.csv", "csv").
+
+# 'type declaration' for Report
+Report("file", 0, 0) :- 0 != 0.
+
+FunDef(n, s, e, f) :- <: $t $n() { .. } :>, s = c_src_line_start($n), e = c_src_line_end($n), n = c_name($n), f = io_relative_path(c_src_file($n)).
+
+GoodRegex(".*_good"), GoodRegex("good.*").
+BadRegex(".*_bad"), BadRegex("bad.*").
+
+GoodFunc(n, s, e, f) :- FunDef(n, s, e, f), MATCH(r, n), GoodRegex(r).
+BadFunc(n, s, e, f) :- FunDef(n, s, e, f), MATCH(r, n), BadRegex(r).
+
+OUTPUT('GoodFunc, "GoodFunc.csv", "csv").
+
+TruePositive(f, l, c) :- Report(f, l, c), GoodFunc(n, s, e, f), LTE(s, l), LTE(l, e).
+FalsePositive(f, l, c) :- Report(f, l, c), NOT(TruePositive(f, l, c)).
+
+OUTPUT('TruePositive, "clog.true.positive.csv", "csv").
+OUTPUT('FalsePositive, "clog.false.positive.csv", "csv").
