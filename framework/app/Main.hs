@@ -44,7 +44,7 @@ handleOptions (Options d jd "juliet" jar clogp jf) = do
   absClogP <- canonicalizePath clogp
   manifestP <- canonicalizePath $ d </> "manifest.xml"
 
-  Juliet.clean $ Juliet.defaultJulietOpts absD
+  -- Juliet.clean $ Juliet.defaultJulietOpts absD
 
   let clangOpts = (Juliet.defaultJulietOpts absD) {
     Juliet.includes = absIncs,

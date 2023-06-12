@@ -153,7 +153,7 @@ rules opts = do
       putStrLn "clang/clog compare is the ground truth"
       putStrLn $ printf "True positives reported by clang and not clog %d" (length groundAndClangNotClog)
       putStrLn $ printf "False positives where both clang and clog agree %d" (length clangAndClogNotGround)
-      putStrLn $ printf "False negatives reported by clog and not clang %d" (length clogNotClangNotGround)
+      putStrLn $ printf "False positives reported by clog and not clang %d" (length clogNotClangNotGround)
     writeFile' "ground-and-clang-not-clog.csv" (printCSV $ map toCsvLine groundAndClangNotClog)
     writeFile' "clang-and-clog-not-ground.csv" (printCSV $ map toCsvLine clangAndClogNotGround)
     writeFile' "clog-not-clang-not-ground.csv" (printCSV $ map toCsvLine clogNotClangNotGround)
