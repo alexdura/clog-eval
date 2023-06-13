@@ -24,14 +24,14 @@ PtrDeclNoInit(d, $p) :- d <: $t .., *$p, .. ; :>.
 PtrDeclInit(d, $p, $e) :- d <: $t .., *$p = $e, .. ; :>.
 
 PtrAlloc(s, p) :- s <: $v = alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
-PtrAlloc(s, p) :- s <: $v = malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
+# PtrAlloc(s, p) :- s <: $v = malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 
-PtrAlloc(s, $p) :- s <: $t .., *$p = malloc(..) , ..; :>.
 PtrAlloc(s, $p) :- s <: $t .., *$p = alloc(..) , ..; :>.
+# PtrAlloc(s, $p) :- s <: $t .., *$p = malloc(..) , ..; :>.
 
 # Patterns for matching casts
 PtrAlloc(s, p) :- s <: $v = ($t1) alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
-PtrAlloc(s, p) :- s <: $v = ($t1) malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
+# PtrAlloc(s, p) :- s <: $v = ($t1) malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 
 PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) malloc(..) , ..; :>.
 PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) alloc(..) , ..; :>.
