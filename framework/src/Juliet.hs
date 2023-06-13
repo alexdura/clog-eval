@@ -71,11 +71,12 @@ data JulietOpts = JulietOpts {
   clogJar :: FilePath,
   clogProgramPath :: FilePath,
   manifest :: FilePath,
-  manifestFilter :: String
+  manifestFilter :: String,
+  outputDir :: FilePath
   }
   deriving (Show)
 
-defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" "." "." "."
+defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" "." "." "." "_output"
 
 rules :: JulietOpts -> Rules()
 rules opts = do
@@ -87,7 +88,7 @@ rules opts = do
     liftIO $ encodeFile out cdb
 
   -- run the Clang static analyzer through clang-tidy
-  ["_output" </> "clang.analysis.out", "_output" </> "clang.analysis.time"] &%> \[out, time] -> do
+  [opts.outputDir </> "clang.analysis.out", opts.outputDir </> "clang.analysis.time"] &%> \[out, time] -> do
     need ["compile_commands.json"]
     Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
     let files = CDB.file <$> cdb
@@ -95,25 +96,25 @@ rules opts = do
     writeFile' time (show t)
 
   -- run the Clog analysis
-  ["_output" </> "clog.analysis.csv", "_output" </> "clog.analysis.time"] &%> \[out, time] -> do
+  [opts.outputDir </> "clog.analysis.csv", opts.outputDir </> "clog.analysis.time"] &%> \[out, time] -> do
     need ["compile_commands.json",
-          opts.clogProgramPath </> "uninitialized_variable.mdl"]
+          opts.clogProgramPath]
     Just cdb <- liftIO (decodeFileStrict "compile_commands.json" :: IO (Maybe CDB.CompilationDatabase))
     let files = CDB.file <$> cdb
-    (CmdTime t) <- cmd (FileStdout $ "_output" </> "clog.analysis.out") (FileStderr $ "_output" </> "clog.analysis.err")
+    (CmdTime t) <- cmd (FileStdout $ opts.outputDir </> "clog.analysis.out") (FileStderr $ opts.outputDir </> "clog.analysis.err")
       "java" "-jar" opts.clogJar "-lang" "c4"
       "-S" (Prelude.foldr1 (\x y -> x ++ ":" ++ y) ((++ ",A") <$> unpack <$> files))
-      "-D" "_output"
+      "-D" opts.outputDir
       opts.clogXargs
-      (opts.clogProgramPath </> "uninitialized_variable.mdl")
+      opts.clogProgramPath
     writeFile' time (show t)
 
   -- clasify the Clog reports between true positive and false positives
-  ["_output" </> "clog.true.positive.csv",
-   "_output" </> "clog.false.positive.csv",
-   "_output" </> "clog.false.negative.csv"] &%> \[tpCsv,fpCsv, fnCsv] -> do
-    need ["_output" </> "clog.analysis.csv"]
-    r <- liftIO $ extractReportsCSV $ "_output" </> "clog.analysis.csv" -- extract the report produced by clog
+  [opts.outputDir </> "clog.true.positive.csv",
+   opts.outputDir </> "clog.false.positive.csv",
+   opts.outputDir </> "clog.false.negative.csv"] &%> \[tpCsv,fpCsv, fnCsv] -> do
+    need [opts.outputDir </> "clog.analysis.csv"]
+    r <- liftIO $ extractReportsCSV $ opts.outputDir </> "clog.analysis.csv" -- extract the report produced by clog
     g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
     let fg = filter (\r -> r.file =~ opts.manifestFilter) g
         r' = map (\rep -> rep { file = takeFileName rep.file }) r
@@ -124,9 +125,9 @@ rules opts = do
     writeFile' fnCsv (printCSV $ map toCsvLine fn)
 
   -- post-process the output of the Clang static analyzer
-  "_output" </> "clang.analysis.csv" %> \out -> do
-    need ["_output" </> "clang.analysis.out"]
-    lines <- readFileLines $ "_output" </> "clang.analysis.out"
+  opts.outputDir </> "clang.analysis.csv" %> \out -> do
+    need [opts.outputDir </> "clang.analysis.out"]
+    lines <- readFileLines $ opts.outputDir </> "clang.analysis.out"
     let reports = fmap (\r -> [file r
                               , show $ line r
                               , show $ col r
@@ -137,9 +138,9 @@ rules opts = do
     writeFile' out (printCSV reports)
 
   phony "clang-clog-compare" $ do
-    need ["_output" </> "clog.analysis.csv", "_output" </> "clang.analysis.csv"]
-    clogReport <- liftIO $ extractReportsCSV $ "_output" </> "clog.analysis.csv"
-    clangReport <- liftIO $ extractReportsCSV $ "_output" </> "clang.analysis.csv"
+    need [opts.outputDir </> "clog.analysis.csv", opts.outputDir </> "clang.analysis.csv"]
+    clogReport <- liftIO $ extractReportsCSV $ opts.outputDir </> "clog.analysis.csv"
+    clangReport <- liftIO $ extractReportsCSV $ opts.outputDir </> "clang.analysis.csv"
     groundReport <- liftIO $ extractReportsXML opts.manifest
     let normFileName r = r { file = takeFileName r.file }
         clangReport' = normFileName <$> clangReport
@@ -154,9 +155,9 @@ rules opts = do
       putStrLn $ printf "True positives reported by clang and not clog %d" (length groundAndClangNotClog)
       putStrLn $ printf "False positives where both clang and clog agree %d" (length clangAndClogNotGround)
       putStrLn $ printf "False positives reported by clog and not clang %d" (length clogNotClangNotGround)
-    writeFile' "ground-and-clang-not-clog.csv" (printCSV $ map toCsvLine groundAndClangNotClog)
-    writeFile' "clang-and-clog-not-ground.csv" (printCSV $ map toCsvLine clangAndClogNotGround)
-    writeFile' "clog-not-clang-not-ground.csv" (printCSV $ map toCsvLine clogNotClangNotGround)
+    writeFile' (opts.outputDir </> "ground-and-clang-not-clog.csv") (printCSV $ map toCsvLine groundAndClangNotClog)
+    writeFile' (opts.outputDir </> "clang-and-clog-not-ground.csv") (printCSV $ map toCsvLine clangAndClogNotGround)
+    writeFile' (opts.outputDir </> "clog-not-clang-not-ground.csv") (printCSV $ map toCsvLine clogNotClangNotGround)
 
 
   -- phony "stats-clog"
@@ -166,16 +167,16 @@ rules opts = do
   printStats opts "clang.analysis.csv" "stats-clang"
 
   phony "clean" $ do
-    removeFilesAfter "_output" ["*"]
+    removeFilesAfter opts.outputDir ["*"]
     removeFilesAfter "." ["compile_commands.json"]
 
 genStats :: JulietOpts -> String -> String -> String -> String -> Rules ()
 genStats opts inReport outTruePos outFalsePos outFalseNeg =
-  ["_output" </> outTruePos,
-   "_output" </> outFalsePos,
-   "_output" </> outFalseNeg] &%> \[tpCsv,fpCsv, fnCsv] -> do
-    need ["_output" </> inReport]
-    r <- liftIO $ extractReportsCSV $ "_output" </> "clog.analysis.csv" -- extract the report produced by clog
+  [opts.outputDir </> outTruePos,
+   opts.outputDir </> outFalsePos,
+   opts.outputDir </> outFalseNeg] &%> \[tpCsv,fpCsv, fnCsv] -> do
+    need [opts.outputDir </> inReport]
+    r <- liftIO $ extractReportsCSV $ opts.outputDir </> "clog.analysis.csv" -- extract the report produced by clog
     g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
     let fg = filter (\r -> r.file =~ opts.manifestFilter) g
         r' = map (\rep -> rep { file = takeFileName rep.file }) r
@@ -188,8 +189,8 @@ genStats opts inReport outTruePos outFalsePos outFalseNeg =
 printStats :: JulietOpts -> String -> String -> Rules ()
 printStats opts inReport name =
   phony name $ do
-    need ["_output" </> inReport]
-    r <- liftIO $ extractReportsCSV $ "_output" </> inReport -- extract the report produced by clog
+    need [opts.outputDir </> inReport]
+    r <- liftIO $ extractReportsCSV $ opts.outputDir </> inReport -- extract the report produced by clog
     g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
 
     let fg = filter (\r -> r.file =~ opts.manifestFilter) g
@@ -204,13 +205,13 @@ printStats opts inReport name =
 
 runClang :: JulietOpts -> IO ()
 runClang opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-  want ["_output" </> "clang.analysis.out"]
+  want [opts.outputDir </> "clang.analysis.out"]
   rules opts
 
 runClog opts = withCurrentDirectory opts.dir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-  -- want $ ("_output" </>) <$> ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
+  -- want $ (opts.outputDir </>) <$> ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
 
-  want $ "clang-clog-compare" : "stats-clog" : "stats-clang" : (("_output" </>) <$> ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"])
+  want $ "clang-clog-compare" : "stats-clog" : "stats-clang" : ((opts.outputDir </>) <$> ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"])
   rules opts
 
 extractReportXML :: ArrowXml a => a XmlTree Report
