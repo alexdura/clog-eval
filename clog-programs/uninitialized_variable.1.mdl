@@ -23,19 +23,22 @@ UninitializedUse(f, l, c, "core.uninitialized.Assign") :- VarUseNoAssign(v), f =
 PtrDeclNoInit(d, $p) :- d <: $t .., *$p, .. ; :>.
 PtrDeclInit(d, $p, $e) :- d <: $t .., *$p = $e, .. ; :>.
 
+PtrAlloc(s, p) :- s <: $v = __builtin_alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 PtrAlloc(s, p) :- s <: $v = alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 # PtrAlloc(s, p) :- s <: $v = malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 
+PtrAlloc(s, $p) :- s <: $t .., *$p = __builtin_alloca(..) , ..; :>.
 PtrAlloc(s, $p) :- s <: $t .., *$p = alloca(..) , ..; :>.
 # PtrAlloc(s, $p) :- s <: $t .., *$p = malloc(..) , ..; :>.
 
 # Patterns for matching casts
+PtrAlloc(s, p) :- s <: $v = ($t1) __builtin_alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 PtrAlloc(s, p) :- s <: $v = ($t1) alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 # PtrAlloc(s, p) :- s <: $v = ($t1) malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 
-# PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) malloc(..) , ..; :>.
+PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) __builtin_alloca(..) , ..; :>.
 PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) alloca(..) , ..; :>.
-
+# PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) malloc(..) , ..; :>.
 
 PtrAssign(s, p), PtrNotDeref($v) :- s <: *$v = $u :>, p = c_decl($v), PtrAlloc(_, p).
 PtrAssign(s, p), PtrNotDeref($v) :- s <: $v[$i] = $u :>, p = c_decl($v), PtrAlloc(_, p).
@@ -54,3 +57,4 @@ UninitializedUse(f, l, c, "core.uninitialized.Assign") :- PtrDerefNoAssign(u), f
 
 
 OUTPUT('UninitializedUse, "clog.analysis.csv", "csv").
+OUTPUT('PtrAlloc, "PtrAlloc.csv", "csv").
