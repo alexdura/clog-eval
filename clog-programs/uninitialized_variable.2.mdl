@@ -33,7 +33,7 @@ PtrAlloc(s, $p) :- s <: $t .., *$p = alloc(..) , ..; :>.
 PtrAlloc(s, p) :- s <: $v = ($t1) alloca(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 # PtrAlloc(s, p) :- s <: $v = ($t1) malloc(..) :>, p = c_decl($v), PtrDeclNoInit(_, p).
 
-# PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) malloc(..) , ..; :>.
+PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) malloc(..) , ..; :>.
 PtrAlloc(s, $p) :- s <: $t .., *$p = ($t1) alloc(..) , ..; :>.
 
 
