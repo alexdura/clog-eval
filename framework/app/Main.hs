@@ -32,7 +32,7 @@ cliOptions = Options
   <$> strOption (long "srcdir" <> metavar "SRC_DIR" <> help "Source directory")
   <*> strOption (long "juliet-dir" <> metavar "JULIET_DIR" <> help "Juliet subdirectory")
   <*> strOption (long "output-dir" <> metavar "OUTPUT_DIR" <> help "Output subdirectory" <> value "_output")
-  <*> option auto (long "mode" <> metavar "MODE" <> help "Mode: 'juliet' or 'project'" <> showDefault <> value "juliet")
+  <*> strOption (long "mode" <> metavar "MODE" <> help "Mode: 'juliet' or 'project'" <> showDefault <> value "juliet")
   <*> strOption (long "jar" <> metavar "JAR" <> help "Clog jar" <> value "compiler.jar")
   <*> strOption (long "clog-program" <> metavar "CLOG_PROGRAM" <> help "Clog program path")
   <*> strOption (long "juliet-filter" <> metavar "JULIET_FILTER" <> help "Juliet filter (regex)")
@@ -42,6 +42,10 @@ cliOptions = Options
 handleOptions (Options _ _ _ "project"  _ _ _) = forM_ projects $
                                       \p -> withCurrentDirectory (Project.path p) $ shake shakeOptions {shakeVerbosity=Verbose} Project.buildProject'
 
+handleOptions (Options d jd _ "clean" _ _ _) = do
+  absD <- canonicalizePath $ d </> jd
+  Juliet.clean $ Juliet.defaultJulietOpts absD
+
 handleOptions (Options d jd outd "juliet" jar clogp jf) = do
   absIncs <- mapM canonicalizePath [d </> "testcasesupport"]
   absD <- canonicalizePath $ d </> jd
@@ -50,14 +54,15 @@ handleOptions (Options d jd outd "juliet" jar clogp jf) = do
 
   -- Juliet.clean $ Juliet.defaultJulietOpts absD
 
-  let clangOpts = (Juliet.defaultJulietOpts absD) {
-    Juliet.includes = absIncs,
-    Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"] }
-  Juliet.runClang $ clangOpts
+  -- let clangOpts = (Juliet.defaultJulietOpts absD) {
+  --   Juliet.includes = absIncs,
+  --   Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"] }
+  -- Juliet.runClang $ clangOpts
 
   Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
     Juliet.includes = absIncs,
     Juliet.clogXargs = [],
+    Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"],
     Juliet.clogJar = jar,
     Juliet.clogProgramPath = absClogP,
     Juliet.manifestFilter = jf,
