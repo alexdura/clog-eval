@@ -94,7 +94,7 @@ rules opts = do
     need [compile_commands]
     Just cdb <- liftIO (decodeFileStrict compile_commands :: IO (Maybe CDB.CompilationDatabase))
     let files = CDB.file <$> cdb
-    (CmdTime t) <- cmd (FileStdout out)
+    (CmdTime t) <- cmd (FileStdout out) (FileStderr "clang.analysis.err")
       "clang-tidy"
       "-p" (opts.dir </> opts.outputDir)
       (opts.clangXargs ++ (unpack <$> files))
