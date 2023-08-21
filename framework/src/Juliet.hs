@@ -84,7 +84,7 @@ rules opts = do
   -- build the compile commands file needed by the clang static analyzer
   compile_commands %> \out -> do
     c_files <- getDirectoryFiles opts.dir ["//*.c"]
-    liftIO $ print opts.dir
+    liftIO $ putStrLn opts.dir
     let absCFiles = (opts.dir </>) <$> c_files
     let cdb = buildCommandObject opts.dir opts.includes <$> absCFiles
     liftIO $ encodeFile out cdb
@@ -202,10 +202,10 @@ printStats opts inReport name =
         r' = map (\rep -> rep { file = takeFileName rep.file }) r
         (tp, fp, fn) = compareResultsFileLineOnly fg r'
     liftIO $ do
-      print name
-      print ((printf "True positives %d/%d" (length tp) (length fg)) :: String)
-      print ((printf "False positives %d/%d" (length fp) (length fg)) :: String)
-      print ((printf "False negatives %d/%d" (length fn) (length fg)) :: String)
+      putStrLn name
+      putStrLn ((printf "True positives %d/%d" (length tp) (length fg)) :: String)
+      putStrLn ((printf "False positives %d/%d" (length fp) (length fg)) :: String)
+      putStrLn ((printf "False negatives %d/%d" (length fn) (length fg)) :: String)
 
 
 runClang :: JulietOpts -> IO ()
