@@ -16,7 +16,7 @@ import Data.Maybe
 import Text.XML.HXT.Core
 import Text.Printf
 import Data.List
-
+import Data.List.Split
 ------------------------------ Report ------------------------------
 
 data Report = Report {
@@ -32,16 +32,11 @@ data ReportKind = WarningReport
                 | OtherReport
                 deriving (Eq, Show)
 
-processClangTidyOutput' r [] = [r]
-processClangTidyOutput' r (l:ls) = case extractReportClang l of
-                                     Just r' -> (r : processClangTidyOutput' r' ls)
-                                     Nothing -> processClangTidyOutput' r { desc = r.desc ++ " " ++ l } ls
 
 processClangTidyOutput :: [String] -> [Report]
-processClangTidyOutput [] = []
-processClangTidyOutput (l:ls) = case extractReportClang l of
-                                   Just r -> processClangTidyOutput' r ls
-                                   Nothing -> processClangTidyOutput ls
+processClangTidyOutput outs = let chunks = split (dropInitBlank $ keepDelimsL $ whenElt (isJust . extractReportClang)) outs in
+                                (\(h:t) -> let r = fromJust $ extractReportClang h in r { desc = foldl (++) r.desc t}) <$> chunks
+
 
 extractReportClang :: String -> Maybe Report
 extractReportClang l = do
@@ -157,7 +152,7 @@ rules opts = do
         clogNotClangNotGround = deleteFirstsBy reportEq clogReport' (unionBy reportEq clangReport' groundReport')
         toCsvLine r = [file r, show $ line r, desc r]
     liftIO $ do
-      putStrLn "clang/clog compare is the ground truth"
+      putStrLn "clang/clog compare where clang is the ground truth"
       putStrLn $ printf "True positives reported by clang and not clog %d" (length groundAndClangNotClog)
       putStrLn $ printf "False positives where both clang and clog agree %d" (length clangAndClogNotGround)
       putStrLn $ printf "False positives reported by clog and not clang %d" (length clogNotClangNotGround)
@@ -259,6 +254,6 @@ compareResultsFileLineOnly :: [Report] -- ground truth report
                                [Report], -- false positives
                                [Report]) -- false negatives
 
-compareResultsFileLineOnly g t = (intersectBy reportEq t g,
+compareResultsFileLineOnly g t = (intersectBy reportEq g t,
                                   deleteFirstsBy reportEq t g,
                                   deleteFirstsBy reportEq g t)

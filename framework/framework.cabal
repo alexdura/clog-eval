@@ -50,6 +50,7 @@ library
     , process
     , regex-tdfa >=1.3.2
     , shake
+    , split
     , text
     , time
   default-language: Haskell2010
@@ -75,6 +76,7 @@ executable framework-exe
     , process
     , regex-tdfa >=1.3.2
     , shake
+    , split
     , text
     , time
   default-language: Haskell2010
@@ -101,6 +103,7 @@ test-suite framework-test
     , process
     , regex-tdfa >=1.3.2
     , shake
+    , split
     , text
     , time
   default-language: Haskell2010
