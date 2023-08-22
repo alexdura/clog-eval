@@ -16,41 +16,16 @@ import Data.Maybe
 import Text.XML.HXT.Core
 import Text.Printf
 import Data.List
-import Data.List.Split
+
+import Report
+import ClangTidy
+
+
 ------------------------------ Report ------------------------------
+classifyReport :: Report JulietTag -> ReportClass
+classifyReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = CWE457
+classifyReport _ = NotRelevant
 
-data Report = Report {
-  file :: FilePath,
-  line :: Int,
-  col :: Int,
-  desc :: String,
-  kind :: ReportKind
-  } deriving (Eq, Show)
-
-data ReportKind = WarningReport
-                | ErrorReport
-                | OtherReport
-                deriving (Eq, Show)
-
-
-processClangTidyOutput :: [String] -> [Report]
-processClangTidyOutput outs = let chunks = split (dropInitBlank $ keepDelimsL $ whenElt (isJust . extractReportClang)) outs in
-                                (\(h:t) -> let r = fromJust $ extractReportClang h in r { desc = foldl (++) r.desc t}) <$> chunks
-
-
-extractReportClang :: String -> Maybe Report
-extractReportClang l = do
-  (_, _, _, [f, l, c, k, m]) <- l =~~ "(.+):(.+):(.+): (.+): (.+)" :: Maybe (String, String, String, [String])
-  return $ Report f (read l) (read c) m (case k of
-                                           "warning" -> WarningReport
-                                           "error" -> ErrorReport
-                                           _ -> OtherReport)
-
-extractChecker :: Report -> Maybe String
-extractChecker (Report _ _ _ desc WarningReport) = do
-  (_, _, _, m:_) <- desc =~~ "\\[([^[:space:]]+)\\]" :: Maybe (String, String, String, [String])
-  return m
-extractChecker _ = Nothing
 
 buildCommandObject :: FilePath -> [FilePath] -> FilePath -> CDB.CommandObject
 buildCommandObject d incs f =
@@ -219,7 +194,7 @@ runClog opts = do
     want $ "clang-clog-compare" : "stats-clog" : "stats-clang" : ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
     rules opts
 
-extractReportXML :: ArrowXml a => a XmlTree Report
+extractReportXML :: ArrowXml a => a XmlTree (Report b)
 extractReportXML = deep (isElem >>> hasName "file") >>>
   proc x -> do
     file <- getAttrValue "path" -< x
@@ -228,10 +203,10 @@ extractReportXML = deep (isElem >>> hasName "file") >>>
     flawName <- getAttrValue "name" -< flaw
     returnA -< Report file ((read flawLine)::Int) 0 flawName OtherReport
 
-extractReportsXML :: FilePath -> IO [Report]
+extractReportsXML :: FilePath -> IO [Report a]
 extractReportsXML f = runX (readDocument [withValidate no] f >>> extractReportXML)
 
-extractReportsCSV :: FilePath -> IO [Report]
+extractReportsCSV :: FilePath -> IO [Report a]
 extractReportsCSV f = do
   Right csv <- parseCSVFromFile f
   return $ fmap (\[f, l, c, err] -> Report f ((read l)::Int) ((read c)::Int) err OtherReport) $ filter (/= [""]) csv
@@ -245,15 +220,16 @@ clean opts = do
     rules opts
 
 
-reportEq :: Report -> Report -> Bool
+reportEq :: Report a -> Report b -> Bool
 reportEq l r = file l == file r && line l == line r
 
-compareResultsFileLineOnly :: [Report] -- ground truth report
-                           -> [Report] -- tool reports
-                           -> ([Report], -- true positives
-                               [Report], -- false positives
-                               [Report]) -- false negatives
+compareResultsFileLineOnly :: [Report a] -- ground truth report
+                           -> [Report b] -- tool reports
+                           -> ([Report a], -- true positives
+                               [Report b], -- false positives
+                               [Report a]) -- false negatives
 
-compareResultsFileLineOnly g t = (intersectBy reportEq g t,
-                                  deleteFirstsBy reportEq t g,
-                                  deleteFirstsBy reportEq g t)
+-- compareResultsFileLineOnly g t = (intersectBy reportEq g t,
+--                                   deleteFirstsBy reportEq t g,
+--                                   deleteFirstsBy reportEq g t)
+compareResultsFileLineOnly = undefined
