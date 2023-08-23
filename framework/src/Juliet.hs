@@ -19,12 +19,12 @@ import Data.List
 
 import Report
 import ClangTidy
-
+import Clog
 
 ------------------------------ Report ------------------------------
-classifyReport :: Report JulietTag -> ReportClass
-classifyReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = CWE457
-classifyReport _ = NotRelevant
+classifyJulietReport :: Report -> ReportClass
+classifyJulietReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = Juliet_CWE457
+classifyJulietReport _ = NotRelevant
 
 
 buildCommandObject :: FilePath -> [FilePath] -> FilePath -> CDB.CommandObject
@@ -94,7 +94,9 @@ rules opts = do
     g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
     let fg = filter (\r -> r.file =~ opts.manifestFilter) g
         r' = map (\rep -> rep { file = takeFileName rep.file }) r
-        (tp, fp, fn) = compareResultsFileLineOnly fg r'
+        tp = reportIntersect classifyClogReport classifyJulietReport r' fg
+        fp = reportDiff classifyClogReport classifyJulietReport r' fg
+        fn = reportDiff classifyJulietReport classifyClogReport fg r'
         toCsvLine rl = [file rl, show $ line rl , desc rl]
     writeFile' tpCsv (printCSV $ map toCsvLine tp)
     writeFile' fpCsv (printCSV $ map toCsvLine fp)
@@ -107,7 +109,7 @@ rules opts = do
     let reports = fmap (\r -> [file r
                               , show $ line r
                               , show $ col r
-                              , fromJust $ extractChecker r
+                              , desc r
                                 ]) $
                   Prelude.filter (\r -> kind r == WarningReport && isJust (extractChecker r))
                   (processClangTidyOutput lines)
@@ -122,9 +124,13 @@ rules opts = do
         clangReport' = normFileName <$> clangReport
         clogReport' = normFileName <$> clogReport
         groundReport' = filter (\r -> file r =~ opts.manifestFilter) groundReport
-        groundAndClangNotClog = deleteFirstsBy reportEq (intersectBy reportEq groundReport' clangReport') clogReport'
-        clangAndClogNotGround = deleteFirstsBy reportEq (intersectBy reportEq clangReport' clogReport') groundReport'
-        clogNotClangNotGround = deleteFirstsBy reportEq clogReport' (unionBy reportEq clangReport' groundReport')
+        groundAndClang = reportIntersect classifyJulietReport classifyClangReport groundReport' clangReport'
+        clangAndClog = reportIntersect classifyClangReport classifyClogReport clangReport' clogReport'
+        groundAndClangNotClog = reportDiff classifyJulietReport classifyClogReport groundAndClang clogReport'
+        clangAndClogNotGround = reportDiff classifyClangReport classifyJulietReport clangAndClog groundReport'
+        clogNotClang = reportDiff classifyClogReport classifyClangReport clogReport' clangReport'
+        clogNotGround = reportDiff classifyClogReport classifyJulietReport clogReport' groundReport'
+        clogNotClangNotGround = reportIntersect classifyClogReport classifyClogReport clogNotClang clogNotGround
         toCsvLine r = [file r, show $ line r, desc r]
     liftIO $ do
       putStrLn "clang/clog compare where clang is the ground truth"
@@ -137,32 +143,16 @@ rules opts = do
 
 
   -- phony "stats-clog"
-  printStats opts "clog.analysis.csv" "stats-clog"
+  printStats opts classifyClogReport "clog.analysis.csv" "stats-clog"
 
   -- phony "stats-clang"
-  printStats opts "clang.analysis.csv" "stats-clang"
+  printStats opts classifyClangReport "clang.analysis.csv" "stats-clang"
 
   phony "clean" $ do
     removeFilesAfter (opts.dir </> opts.outputDir) ["*"]
 
-genStats :: JulietOpts -> String -> String -> String -> String -> Rules ()
-genStats opts inReport outTruePos outFalsePos outFalseNeg =
-  [outTruePos,
-   outFalsePos,
-   outFalseNeg] &%> \[tpCsv,fpCsv, fnCsv] -> do
-    need [inReport]
-    r <- liftIO $ extractReportsCSV $ "clog.analysis.csv" -- extract the report produced by clog
-    g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
-    let fg = filter (\r -> r.file =~ opts.manifestFilter) g
-        r' = map (\rep -> rep { file = takeFileName rep.file }) r
-        (tp, fp, fn) = compareResultsFileLineOnly fg r'
-        toCsvLine rl = [file rl, show $ line rl , desc rl]
-    writeFile' tpCsv (printCSV $ map toCsvLine tp)
-    writeFile' fpCsv (printCSV $ map toCsvLine fp)
-    writeFile' fnCsv (printCSV $ map toCsvLine fn)
-
-printStats :: JulietOpts -> String -> String -> Rules ()
-printStats opts inReport name =
+printStats :: JulietOpts -> (Report -> ReportClass) -> String -> String -> Rules ()
+printStats opts classifier inReport name =
   phony name $ do
     need [inReport]
     r <- liftIO $ extractReportsCSV $ inReport -- extract the report produced by clog
@@ -170,7 +160,9 @@ printStats opts inReport name =
 
     let fg = filter (\r -> r.file =~ opts.manifestFilter) g
         r' = map (\rep -> rep { file = takeFileName rep.file }) r
-        (tp, fp, fn) = compareResultsFileLineOnly fg r'
+        tp = reportIntersect classifier classifyJulietReport r' fg
+        fp = reportDiff classifier classifyJulietReport r' fg
+        fn = reportDiff classifyJulietReport classifier fg r'
     liftIO $ do
       putStrLn name
       putStrLn ((printf "True positives %d/%d" (length tp) (length fg)) :: String)
@@ -194,7 +186,7 @@ runClog opts = do
     want $ "clang-clog-compare" : "stats-clog" : "stats-clang" : ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
     rules opts
 
-extractReportXML :: ArrowXml a => a XmlTree (Report b)
+extractReportXML :: ArrowXml a => a XmlTree (Report)
 extractReportXML = deep (isElem >>> hasName "file") >>>
   proc x -> do
     file <- getAttrValue "path" -< x
@@ -203,10 +195,10 @@ extractReportXML = deep (isElem >>> hasName "file") >>>
     flawName <- getAttrValue "name" -< flaw
     returnA -< Report file ((read flawLine)::Int) 0 flawName OtherReport
 
-extractReportsXML :: FilePath -> IO [Report a]
+extractReportsXML :: FilePath -> IO [Report]
 extractReportsXML f = runX (readDocument [withValidate no] f >>> extractReportXML)
 
-extractReportsCSV :: FilePath -> IO [Report a]
+extractReportsCSV :: FilePath -> IO [Report]
 extractReportsCSV f = do
   Right csv <- parseCSVFromFile f
   return $ fmap (\[f, l, c, err] -> Report f ((read l)::Int) ((read c)::Int) err OtherReport) $ filter (/= [""]) csv
@@ -220,14 +212,14 @@ clean opts = do
     rules opts
 
 
-reportEq :: Report a -> Report b -> Bool
+reportEq :: Report -> Report -> Bool
 reportEq l r = file l == file r && line l == line r
 
-compareResultsFileLineOnly :: [Report a] -- ground truth report
-                           -> [Report b] -- tool reports
-                           -> ([Report a], -- true positives
-                               [Report b], -- false positives
-                               [Report a]) -- false negatives
+compareResultsFileLineOnly :: [Report] -- ground truth report
+                           -> [Report] -- tool reports
+                           -> ([Report], -- true positives
+                               [Report], -- false positives
+                               [Report]) -- false negatives
 
 -- compareResultsFileLineOnly g t = (intersectBy reportEq g t,
 --                                   deleteFirstsBy reportEq t g,

@@ -1,6 +1,10 @@
-module Report (Report (..), ReportKind (..), ReportClass (..), ClangTag, JulietTag, ClogTag) where
+module Report (Report (..), ReportKind (..), ReportClass (..), reportIntersect, reportDiff) where
 
-data Report a = Report {
+import Data.List
+import GHC.Exts (the)
+import GHC.ExecutionStack (Location(functionName))
+
+data Report = Report {
   file :: FilePath,
   line :: Int,
   col :: Int,
@@ -13,9 +17,34 @@ data ReportKind = WarningReport
                 | OtherReport
                 deriving (Eq, Show)
 
-data ReportClass = CWE457
+data ReportClass = Juliet_CWE457
+                 | Clog_UninitializedVarUse
+                 | Clog_UninitializedMemRead
+                 | Clang_UninitializedCallArgument
+                 | Clang_DereferenceOfUndefinedPointerValue
+                 | Clang_PotentialLeakOfMemory
                  | NotRelevant
+                 deriving (Eq, Show, Ord)
 
-data ClangTag
-data JulietTag
-data ClogTag
+reportClassEq :: ReportClass -> ReportClass -> Bool
+
+reportClassEq Juliet_CWE457 Clog_UninitializedMemRead = True
+reportClassEq Juliet_CWE457 Clog_UninitializedVarUse = True
+reportClassEq Juliet_CWE457 Clang_UninitializedCallArgument = True
+reportClassEq Juliet_CWE457 Clang_DereferenceOfUndefinedPointerValue = True
+
+reportClassEq r1 r2
+  | r1 > r2 = reportClassEq r2 r1
+  | r1 == r2 = True
+  | otherwise = False
+
+reportEq ::(Report -> ReportClass) -> (Report -> ReportClass) ->  Report -> Report -> Bool
+reportEq cl cr l r = file l == file r && line l == line r && reportClassEq (cl l) (cr r)
+
+
+reportDiff :: (Report -> ReportClass) -> (Report -> ReportClass) -> [Report] -> [Report] -> [Report]
+-- deleteFirstBy internally flips the arguments to the equality function and our function is not symmetric
+reportDiff cl cr = deleteFirstsBy (reportEq cr cl)
+
+reportIntersect :: (Report -> ReportClass) -> (Report -> ReportClass) -> [Report] -> [Report] -> [Report]
+reportIntersect cl cr = intersectBy (reportEq cl cr)

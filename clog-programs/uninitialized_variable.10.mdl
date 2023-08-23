@@ -28,7 +28,7 @@ VarDefSucc(cfg_loc_succ, v) :- VarDefSucc(cfg_loc, v), CFG_SUCC(cfg_loc, cfg_loc
 VarUseNoDef(cfg_loc, v) :- VarUse(cfg_loc, v), NOT(VarDefSucc(cfg_loc, v)).
 
 
-WarnVarUseNoDef(f, l, c, "core.uninitialized.Assign") :- VarUseNoDef(v, _),
+WarnVarUseNoDef(f, l, c, "UninitializedVarUse") :- VarUseNoDef(v, _),
                     f = io_relative_path(c_src_file(v)),
                     l = c_src_line_start(v),
                     c = c_src_col_start(v).
@@ -79,7 +79,7 @@ MemReadNoWrite(cfg_loc, e) :- MemRead(cfg_loc, e), NOT(MemWriteSucc(cfg_loc, e))
 
 # MemReadUnallocated(cfg_loc, e) :- cfg_loc <: *$v :>, NOT(MemWrite(_, _, $v)), NOT(VarPointsTo(_, v, _)), v = c_decl($v).
 
-WarnMemReadNoWrite(f, l, c, "core.uninitialized.Assign") :- MemReadNoWrite(cfg_loc, _),
+WarnMemReadNoWrite(f, l, c, "UninitializedMemRead") :- MemReadNoWrite(cfg_loc, _),
                     f = io_relative_path(c_src_file(cfg_loc)),
                     l = c_src_line_start(cfg_loc),
                     c = c_src_col_start(cfg_loc).

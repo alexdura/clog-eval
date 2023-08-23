@@ -1,7 +1,8 @@
-module Clog (classifyReport) where
+module Clog (classifyClogReport) where
 
 import Report
 
-classifyReport :: Report ClogTag -> ReportClass
-classifyReport (Report _ _ _ "core.uninitialized.Assign" _) = CWE457
-classifyReport _ = NotRelevant
+classifyClogReport :: Report -> ReportClass
+classifyClogReport (Report _ _ _ "UninitializedMemRead" _) = Clog_UninitializedMemRead
+classifyClogReport (Report _ _ _ "UninitializedVarUse" _) = Clog_UninitializedVarUse
+classifyClogReport _ = NotRelevant
