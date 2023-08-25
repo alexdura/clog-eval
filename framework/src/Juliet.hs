@@ -1,21 +1,22 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE Arrows, NoMonomorphismRestriction #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 
 module Juliet (runClang, runClog, clean, JulietOpts(..), defaultJulietOpts, extractReportsXML) where
 
+import Data.Aeson
+import Data.Maybe
+import Data.Text ( pack, unpack )
 import Development.Shake
 import Development.Shake.FilePath
-import qualified Clang.CompilationDatabase as CDB
-import Data.Aeson
-import Data.Text ( pack, unpack )
+import GHC.Generics
 import System.Directory
 import Text.CSV
-import Text.Regex.TDFA
-import Data.Maybe
-import Text.XML.HXT.Core
 import Text.Printf
-import Data.List
+import Text.Regex.TDFA
+import Text.XML.HXT.Core
+import qualified Clang.CompilationDatabase as CDB
 
 import Report
 import ClangTidy
@@ -24,6 +25,7 @@ import Clog
 ------------------------------ Report ------------------------------
 classifyJulietReport :: Report -> ReportClass
 classifyJulietReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = Juliet_CWE457
+classifyJulietReport (Report _ _ _ "CWE-416: Use After Free" _) = Juliet_CWE416
 classifyJulietReport _ = NotRelevant
 
 
@@ -44,7 +46,10 @@ data JulietOpts = JulietOpts {
   manifestFilter :: String,
   outputDir :: FilePath
   }
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance FromJSON JulietOpts
+instance ToJSON JulietOpts
 
 defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" "." "." "." "_output"
 

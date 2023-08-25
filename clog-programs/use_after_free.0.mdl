@@ -1,0 +1,3 @@
+Warn("", 0, 0, "UseAfterFree").
+
+OUTPUT('Warn, "clog.analysis.csv", "csv").

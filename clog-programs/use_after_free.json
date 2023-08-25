@@ -1,0 +1,11 @@
+{
+    "dir" : "/work/projects/juliet/C/testcases/CWE416_Use_After_Free",
+    "clangXargs" : ["--checks=unix.Malloc"],
+    "clogXargs" : [],
+    "includes" : ["/work/projects/juliet/C/testcasesupport"],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/use_after_free.0.mdl",
+    "manifest" : "/work/projects/juliet/C/manifest.xml",
+    "manifestFilter" : "CWE416.*c",
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE416_Use_After_Free/output.0"
+}

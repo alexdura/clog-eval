@@ -6,6 +6,7 @@ import Development.Shake
 import Options.Applicative
 import Control.Monad
 import System.FilePath
+import Data.Aeson
 
 import qualified Project
 import qualified Juliet
@@ -18,57 +19,24 @@ projects = [
 
 
 data Options = Options {
-  srcDir :: FilePath,
-  julietDir :: FilePath,
-  outputDir :: FilePath,
   mode :: String,
-  jar :: FilePath,
-  clogProgram :: FilePath,
-  julietFilter :: String
-  }
+  desc :: FilePath
+  } deriving (Show)
 
 
 cliOptions = Options
-  <$> strOption (long "srcdir" <> metavar "SRC_DIR" <> help "Source directory")
-  <*> strOption (long "juliet-dir" <> metavar "JULIET_DIR" <> help "Juliet subdirectory")
-  <*> strOption (long "output-dir" <> metavar "OUTPUT_DIR" <> help "Output subdirectory" <> value "_output")
-  <*> strOption (long "mode" <> metavar "MODE" <> help "Mode: 'juliet' or 'project'" <> showDefault <> value "juliet")
-  <*> strOption (long "jar" <> metavar "JAR" <> help "Clog jar" <> value "compiler.jar")
-  <*> strOption (long "clog-program" <> metavar "CLOG_PROGRAM" <> help "Clog program path")
-  <*> strOption (long "juliet-filter" <> metavar "JULIET_FILTER" <> help "Juliet filter (regex)")
+  <$> strOption (long "mode" <> metavar "MODE" <> help "Mode: 'juliet', 'project'" <> showDefault <> value "juliet")
+  <*> strOption (long "desc" <> metavar "DESC" <> help "Run description")
 
 
 
-handleOptions (Options _ _ _ "project"  _ _ _) = forM_ projects $
+handleOptions (Options "project"  _) = forM_ projects $
                                       \p -> withCurrentDirectory (Project.path p) $ shake shakeOptions {shakeVerbosity=Verbose} Project.buildProject'
 
-handleOptions (Options d jd _ "clean" _ _ _) = do
-  absD <- canonicalizePath $ d </> jd
-  Juliet.clean $ Juliet.defaultJulietOpts absD
-
-handleOptions (Options d jd outd "juliet" jar clogp jf) = do
-  absIncs <- mapM canonicalizePath [d </> "testcasesupport"]
-  absD <- canonicalizePath $ d </> jd
-  absClogP <- canonicalizePath clogp
-  manifestP <- canonicalizePath $ d </> "manifest.xml"
-
-  -- Juliet.clean $ Juliet.defaultJulietOpts absD
-
-  -- let clangOpts = (Juliet.defaultJulietOpts absD) {
-  --   Juliet.includes = absIncs,
-  --   Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"] }
-  -- Juliet.runClang $ clangOpts
-
-  Juliet.runClog $ (Juliet.defaultJulietOpts absD) {
-    Juliet.includes = absIncs,
-    Juliet.clogXargs = [],
-    Juliet.clangXargs = ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"],
-    Juliet.clogJar = jar,
-    Juliet.clogProgramPath = absClogP,
-    Juliet.manifestFilter = jf,
-    Juliet.manifest = manifestP,
-    Juliet.outputDir = outd
-    }
+handleOptions (Options "juliet" desc) = do
+  Just jo <- decodeFileStrict desc :: IO (Maybe Juliet.JulietOpts)
+  print jo
+  Juliet.runClog jo
 
 
 main :: IO ()

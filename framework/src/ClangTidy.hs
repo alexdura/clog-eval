@@ -35,4 +35,8 @@ classifyClangReport r
   | r.desc =~ "Potential leak of memory(.*)\\[clang-analyzer-unix.Malloc\\]" = Clang_PotentialLeakOfMemory
   | r.desc =~ "Access to field (.*) results in a dereference of an undefined\
               \ pointer value (.*)\\[clang-analyzer-core.NullDereference\\]" = Clang_DereferenceOfUndefinedPointerValue
+  | r.desc =~ "Use of memory after it is freed \\[clang-analyzer-unix.Malloc\\]" = Clang_UseAfterFree
+  | r.desc =~ "Value stored to (.*) during its initialization is never read \\[clang-analyzer-deadcode.DeadStores\\]" = Clang_DeadStores
+  | r.desc =~ "Call to function (.*) is insecure as it does not provide security checks (.*) \\[clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling\\]" = Clang_DeprecatedOrUnsafeBufferHandling
+  | r.desc =~ "Array access (.*) results in a null pointer dereference \\[clang-analyzer-core.NullDereference\\]" = Clang_DereferenceOfUndefinedPointerValue
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"

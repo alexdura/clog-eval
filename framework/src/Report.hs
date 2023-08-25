@@ -18,11 +18,15 @@ data ReportKind = WarningReport
                 deriving (Eq, Show)
 
 data ReportClass = Juliet_CWE457
+                 | Juliet_CWE416
                  | Clog_UninitializedVarUse
                  | Clog_UninitializedMemRead
                  | Clang_UninitializedCallArgument
                  | Clang_DereferenceOfUndefinedPointerValue
                  | Clang_PotentialLeakOfMemory
+                 | Clang_UseAfterFree
+                 | Clang_DeadStores
+                 | Clang_DeprecatedOrUnsafeBufferHandling
                  | NotRelevant
                  deriving (Eq, Show, Ord)
 
@@ -32,6 +36,7 @@ reportClassEq Juliet_CWE457 Clog_UninitializedMemRead = True
 reportClassEq Juliet_CWE457 Clog_UninitializedVarUse = True
 reportClassEq Juliet_CWE457 Clang_UninitializedCallArgument = True
 reportClassEq Juliet_CWE457 Clang_DereferenceOfUndefinedPointerValue = True
+reportClassEq Juliet_CWE416 Clang_UseAfterFree = True
 
 reportClassEq r1 r2
   | r1 > r2 = reportClassEq r2 r1
