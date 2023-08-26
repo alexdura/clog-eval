@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 
-module Juliet (runClang, runClog, clean, JulietOpts(..), defaultJulietOpts, extractReportsXML) where
+module Juliet (runClang, runClog, clean, JulietOpts(..), extractReportsXML) where
 
 import Data.Aeson
 import Data.Maybe
@@ -44,6 +44,9 @@ data JulietOpts = JulietOpts {
   clogProgramPath :: FilePath,
   manifest :: FilePath,
   manifestFilter :: String,
+  clangFilter :: String,
+  clogFilter :: String,
+  fileFilter :: String,
   outputDir :: FilePath
   }
   deriving (Show, Generic)
@@ -51,7 +54,6 @@ data JulietOpts = JulietOpts {
 instance FromJSON JulietOpts
 instance ToJSON JulietOpts
 
-defaultJulietOpts d = JulietOpts d [] [] [] "compiler.jar" "." "." "." "_output"
 
 rules :: JulietOpts -> Rules()
 rules opts = do
@@ -147,32 +149,41 @@ rules opts = do
     writeFile' ("clog-not-clang-not-ground.csv") (printCSV $ map toCsvLine clogNotClangNotGround)
 
 
-  -- phony "stats-clog"
-  printStats opts classifyClogReport "clog.analysis.csv" "stats-clog"
+  phony "stats-clog" $ do
+    need ["clog.analysis.csv"]
+    clogReport <- liftIO $ extractReportsCSV $ "clog.analysis.csv"
+    groundReport <- liftIO $ extractReportsXML opts.manifest
+    printStats opts.fileFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport
 
-  -- phony "stats-clang"
-  printStats opts classifyClangReport "clang.analysis.csv" "stats-clang"
+  phony "stats-clang" $ do
+    need ["clang.analysis.csv"]
+    clangReport <- liftIO $ extractReportsCSV "clang.analysis.csv"
+    groundReport <- liftIO $ extractReportsXML opts.manifest
+    printStats opts.fileFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport
+
 
   phony "clean" $ do
     removeFilesAfter (opts.dir </> opts.outputDir) ["*"]
 
-printStats :: JulietOpts -> (Report -> ReportClass) -> String -> String -> Rules ()
-printStats opts classifier inReport name =
-  phony name $ do
-    need [inReport]
-    r <- liftIO $ extractReportsCSV $ inReport -- extract the report produced by clog
-    g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
+printStats :: String -- file filter
+           -> String -- ground truth filter (manifest)
+           -> String -- report filter
+           -> (Report -> ReportClass) -- report classifier
+           -> [Report] -- ground reports
+           -> [Report] -- tool reports
+           -> Action ()
 
-    let fg = filter (\r -> r.file =~ opts.manifestFilter) g
-        r' = map (\rep -> rep { file = takeFileName rep.file }) r
-        tp = reportIntersect classifier classifyJulietReport r' fg
-        fp = reportDiff classifier classifyJulietReport r' fg
-        fn = reportDiff classifyJulietReport classifier fg r'
-    liftIO $ do
-      putStrLn name
-      putStrLn ((printf "True positives %d/%d" (length tp) (length fg)) :: String)
-      putStrLn ((printf "False positives %d/%d" (length fp) (length fg)) :: String)
-      putStrLn ((printf "False negatives %d/%d" (length fn) (length fg)) :: String)
+printStats fileFilter manifestFilter reportFilter classifier  groundReport toolReport = do
+  let relevantG = filter (\rep -> rep.file =~ fileFilter && show (classifyJulietReport rep) =~ manifestFilter) groundReport
+      relevantR = filter (\rep -> rep.file =~ fileFilter && show (classifier rep) =~ reportFilter) $
+          map (\rep -> rep { file = takeFileName rep.file }) toolReport
+      tp = reportIntersect classifier classifyJulietReport relevantR relevantG
+      fp = reportDiff classifier classifyJulietReport relevantR relevantG
+      fn = reportDiff classifyJulietReport classifier relevantG relevantR
+  liftIO $ do
+    putStrLn ((printf "True positives %d/%d" (length tp) (length relevantG)) :: String)
+    putStrLn ((printf "False positives %d/%d" (length fp) (length relevantG)) :: String)
+    putStrLn ((printf "False negatives %d/%d" (length fn) (length relevantG)) :: String)
 
 
 runClang :: JulietOpts -> IO ()
