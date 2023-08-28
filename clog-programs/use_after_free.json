@@ -8,7 +8,7 @@
     "manifest" : "/work/projects/juliet/C/manifest.xml",
     "manifestFilter" : "CWE416.*",
     "clangFilter" : "Clang_UseAfterFree",
-    "clogFilter" : "Clog_.*",
-    "fileFilter" : "CWE416.*c",
+    "clogFilter" : "Clog_UseAfterFree",
+    "fileFilter" : "CWE416.*c$",
     "outputDir" : "/work/projects/juliet/C/testcases/CWE416_Use_After_Free/output.0"
 }

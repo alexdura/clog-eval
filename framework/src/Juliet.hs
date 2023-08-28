@@ -155,13 +155,17 @@ rules opts = do
     need ["clog.analysis.csv"]
     clogReport <- liftIO $ extractReportsCSV $ "clog.analysis.csv"
     groundReport <- liftIO $ extractReportsXML opts.manifest
-    printStats opts.fileFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport
+    liftIO $ do
+      putStrLn "Clog precission/recall stats"
+      printStats opts.fileFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport
 
   phony "stats-clang" $ do
     need ["clang.analysis.csv"]
     clangReport <- liftIO $ extractReportsCSV "clang.analysis.csv"
     groundReport <- liftIO $ extractReportsXML opts.manifest
-    printStats opts.fileFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport
+    liftIO $ do
+      putStrLn "Clang precission/recall stats"
+      printStats opts.fileFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport
 
 
   phony "clean" $ do
@@ -173,7 +177,7 @@ printStats :: String -- file filter
            -> (Report -> ReportClass) -- report classifier
            -> [Report] -- ground reports
            -> [Report] -- tool reports
-           -> Action ()
+           -> IO ()
 
 printStats fileFilter manifestFilter reportFilter classifier  groundReport toolReport = do
   let relevantG = filter (\rep -> rep.file =~ fileFilter && show (classifyJulietReport rep) =~ manifestFilter) groundReport
