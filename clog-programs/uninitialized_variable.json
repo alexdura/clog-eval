@@ -7,7 +7,7 @@
     "clogProgramPath" : "/work/projects/clog-eval/clog-programs/uninitialized_variable.10.mdl",
     "manifest" : "/work/projects/juliet/C/manifest.xml",
     "manifestFilter" : "CWE457.*",
-    "clangFilter" : "Clang_.*",
+    "clangFilter" : "Clang_(UninitializedCallArgument|DereferenceOfUndefinedPointerValue)",
     "clogFilter" : "Clog_.*",
     "fileFilter" : "CWE457.*c",
     "outputDir" : "/work/projects/juliet/C/testcases/CWE457_Use_of_Uninitialized_Variable/output.10"

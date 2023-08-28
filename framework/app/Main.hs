@@ -37,6 +37,7 @@ handleOptions (Options "juliet" desc) = do
   Just jo <- decodeFileStrict desc :: IO (Maybe Juliet.JulietOpts)
   print jo
   Juliet.runClog jo
+  Juliet.runClang jo
 
 
 main :: IO ()

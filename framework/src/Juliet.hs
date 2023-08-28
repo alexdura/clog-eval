@@ -97,17 +97,19 @@ rules opts = do
    "clog.false.positive.csv",
    "clog.false.negative.csv"] &%> \[tpCsv,fpCsv, fnCsv] -> do
     need ["clog.analysis.csv"]
-    r <- liftIO $ extractReportsCSV "clog.analysis.csv" -- extract the report produced by clog
-    g <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
-    let fg = filter (\r -> r.file =~ opts.manifestFilter) g
-        r' = map (\rep -> rep { file = takeFileName rep.file }) r
-        tp = reportIntersect classifyClogReport classifyJulietReport r' fg
-        fp = reportDiff classifyClogReport classifyJulietReport r' fg
-        fn = reportDiff classifyJulietReport classifyClogReport fg r'
-        toCsvLine rl = [file rl, show $ line rl , desc rl]
-    writeFile' tpCsv (printCSV $ map toCsvLine tp)
-    writeFile' fpCsv (printCSV $ map toCsvLine fp)
-    writeFile' fnCsv (printCSV $ map toCsvLine fn)
+    clogReport <- liftIO $ extractReportsCSV "clog.analysis.csv" -- extract the report produced by clog
+    groundReport <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
+    dumpStats opts.fileFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport tpCsv fpCsv fnCsv
+
+  -- clasify the Clang reports between true positive and false positives
+  ["clang.true.positive.csv",
+   "clang.false.positive.csv",
+   "clang.false.negative.csv"] &%> \[tpCsv,fpCsv, fnCsv] -> do
+    need ["clang.analysis.csv"]
+    clangReport <- liftIO $ extractReportsCSV "clang.analysis.csv" -- extract the report produced by clang
+    groundReport <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
+    dumpStats opts.fileFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport tpCsv fpCsv fnCsv
+
 
   -- post-process the output of the Clang static analyzer
   "clang.analysis.csv" %> \out -> do
@@ -185,13 +187,35 @@ printStats fileFilter manifestFilter reportFilter classifier  groundReport toolR
     putStrLn ((printf "False positives %d/%d" (length fp) (length relevantG)) :: String)
     putStrLn ((printf "False negatives %d/%d" (length fn) (length relevantG)) :: String)
 
+dumpStats :: String -- file filter
+           -> String -- ground truth filter (manifest)
+           -> String -- report filter
+           -> (Report -> ReportClass) -- report classifier
+           -> [Report] -- ground reports
+           -> [Report] -- tool reports
+           -> FilePath -- true positive
+           -> FilePath -- false positive
+           -> FilePath -- flase negative
+           -> Action ()
+dumpStats fileFilter manifestFilter reportFilter classifier  groundReport toolReport tpCsv fpCsv fnCsv = do
+  let relevantG = filter (\rep -> rep.file =~ fileFilter && show (classifyJulietReport rep) =~ manifestFilter) groundReport
+      relevantR = filter (\rep -> rep.file =~ fileFilter && show (classifier rep) =~ reportFilter) $
+          map (\rep -> rep { file = takeFileName rep.file }) toolReport
+      tp = reportIntersect classifier classifyJulietReport relevantR relevantG
+      fp = reportDiff classifier classifyJulietReport relevantR relevantG
+      fn = reportDiff classifyJulietReport classifier relevantG relevantR
+      toCsvLine rl = [file rl, show $ line rl , desc rl]
+  liftIO $ do
+    writeFile' tpCsv (printCSV $ map toCsvLine tp)
+    writeFile' fpCsv (printCSV $ map toCsvLine fp)
+    writeFile' fnCsv (printCSV $ map toCsvLine fn)
 
 runClang :: JulietOpts -> IO ()
 runClang opts = do
   let buildDir = opts.dir </> opts.outputDir
   createDirectoryIfMissing True buildDir
   withCurrentDirectory buildDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-    want ["clang.analysis.out"]
+    want ["clang.analysis.out", "clang.true.positive.csv", "clang.false.positive.csv", "clang.analysis.csv"]
     rules opts
 
 runClog  :: JulietOpts -> IO ()
@@ -226,18 +250,3 @@ clean opts = do
   withCurrentDirectory buildDir$ shake shakeOptions {shakeVerbosity=Verbose} $ do
     want ["clean"]
     rules opts
-
-
-reportEq :: Report -> Report -> Bool
-reportEq l r = file l == file r && line l == line r
-
-compareResultsFileLineOnly :: [Report] -- ground truth report
-                           -> [Report] -- tool reports
-                           -> ([Report], -- true positives
-                               [Report], -- false positives
-                               [Report]) -- false negatives
-
--- compareResultsFileLineOnly g t = (intersectBy reportEq g t,
---                                   deleteFirstsBy reportEq t g,
---                                   deleteFirstsBy reportEq g t)
-compareResultsFileLineOnly = undefined
