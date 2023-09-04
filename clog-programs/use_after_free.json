@@ -4,11 +4,11 @@
     "clogXargs" : [],
     "includes" : ["/work/projects/juliet/C/testcasesupport"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
-    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/use_after_free.1.mdl",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/use_after_free.3.mdl",
     "manifest" : "/work/projects/juliet/C/manifest.xml",
     "manifestFilter" : "CWE416.*",
     "clangFilter" : "Clang_UseAfterFree",
     "clogFilter" : "Clog_UseAfterFree",
     "fileFilter" : "CWE416.*c$",
-    "outputDir" : "/work/projects/juliet/C/testcases/CWE416_Use_After_Free/output.1"
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE416_Use_After_Free/output.3"
 }
