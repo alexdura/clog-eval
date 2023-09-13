@@ -8,6 +8,7 @@ module Juliet (runClang, runClog, clean, JulietOpts(..), extractReportsXML) wher
 import Data.Aeson
 import Data.Maybe
 import Data.Text ( pack, unpack )
+import Data.List ( intercalate )
 import Development.Shake
 import Development.Shake.FilePath
 import GHC.Generics
@@ -26,13 +27,14 @@ import Clog
 classifyJulietReport :: Report -> ReportClass
 classifyJulietReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = Juliet_CWE457
 classifyJulietReport (Report _ _ _ "CWE-416: Use After Free" _) = Juliet_CWE416
+classifyJulietReport (Report _ _ _ "CWE-078: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')" _) = Juliet_CWE78
 classifyJulietReport _ = NotRelevant
 
 
 buildCommandObject :: FilePath -> [FilePath] -> FilePath -> CDB.CommandObject
 buildCommandObject d incs f =
-  let args = Just $ pack <$> ["clang", f, "-o", f -<.>  exe] ++ (("-I" ++) <$> incs) in
-    CDB.CommandObject (pack d) (pack f) Nothing args (Just $ pack $ f -<.> exe)
+  let args = ["clang", f, "-o", f -<.>  exe] ++ (("-I" ++) <$> incs) in
+    CDB.CommandObject (pack d) (pack f) (Just $ pack $ unwords args) (Just $ pack <$> args) (Just $ pack $ f -<.> exe)
 
 
 data JulietOpts = JulietOpts {
@@ -47,6 +49,7 @@ data JulietOpts = JulietOpts {
   clangFilter :: String,
   clogFilter :: String,
   fileFilter :: String,
+  fileExcludeFilter :: Maybe String,
   outputDir :: FilePath
   }
   deriving (Show, Generic)
@@ -55,16 +58,26 @@ instance FromJSON JulietOpts
 instance ToJSON JulietOpts
 
 
+acceptFile :: JulietOpts -> FilePath -> Bool
+acceptFile opts f = (f =~ opts.fileFilter) && (isNothing opts.fileExcludeFilter || not (f =~ fromJust opts.fileExcludeFilter))
+
 rules :: JulietOpts -> Rules()
 rules opts = do
   let compile_commands = "compile_commands.json"
+      sources_csv = "srcs.csv"
   -- build the compile commands file needed by the clang static analyzer
   compile_commands %> \out -> do
     c_files <- getDirectoryFiles opts.dir ["//*.c"]
     liftIO $ putStrLn opts.dir
-    let absCFiles = (opts.dir </>) <$> c_files
+    let absCFiles = (opts.dir </>) <$> filter (acceptFile opts) c_files
     let cdb = buildCommandObject opts.dir opts.includes <$> absCFiles
     liftIO $ encodeFile out cdb
+
+  sources_csv %> \out -> do
+    need [compile_commands]
+    Just cdb <- liftIO (decodeFileStrict compile_commands :: IO (Maybe CDB.CompilationDatabase))
+    let files = CDB.file <$> cdb
+    liftIO $ writeFile' out (printCSV $ map (\f -> [unpack f, "A"]) files)
 
   -- run the Clang static analyzer through clang-tidy
   ["clang.analysis.out", "clang.analysis.time"] &%> \[out, time] -> do
@@ -79,13 +92,12 @@ rules opts = do
 
   -- run the Clog analysis
   ["clog.analysis.csv", "clog.analysis.time"] &%> \[out, time] -> do
-    need [compile_commands,
+    need [sources_csv,
+          compile_commands,
           opts.clogProgramPath]
-    Just cdb <- liftIO (decodeFileStrict compile_commands :: IO (Maybe CDB.CompilationDatabase))
-    let files = CDB.file <$> cdb
     (CmdTime t) <- cmd (FileStdout "clog.analysis.out") (FileStderr "clog.analysis.err")
       "java" "-jar" opts.clogJar "-lang" "c4"
-      "-S" (Prelude.foldr1 (\x y -> x ++ ":" ++ y) ((++ ",A") . unpack <$> files))
+      "-S" sources_csv
       ["-Xclang=-p ."]
       "-D" "."
       opts.clogXargs

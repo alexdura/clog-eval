@@ -34,10 +34,12 @@ handleOptions (Options "project"  _) = forM_ projects $
                                       \p -> withCurrentDirectory (Project.path p) $ shake shakeOptions {shakeVerbosity=Verbose} Project.buildProject'
 
 handleOptions (Options "juliet" desc) = do
-  Just jo <- decodeFileStrict desc :: IO (Maybe Juliet.JulietOpts)
-  print jo
-  Juliet.runClog jo
-  Juliet.runClang jo
+  jo <- eitherDecodeFileStrict desc :: IO (Either String Juliet.JulietOpts)
+  case jo of
+    Left m -> putStrLn m
+    Right j -> do print j
+                  Juliet.runClog j
+                  Juliet.runClang j
 
 
 main :: IO ()

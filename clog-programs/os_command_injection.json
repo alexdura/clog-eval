@@ -1,0 +1,15 @@
+{
+    "dir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection",
+    "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer-*,clang-analyzer-alpha.security.taint.*"],
+    "clogXargs" : [],
+    "includes" : ["/work/projects/juliet/C/testcasesupport"],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/os_command_injection.0.mdl",
+    "manifest" : "/work/projects/juliet/C/manifest.xml",
+    "manifestFilter" : "CWE78.*",
+    "clangFilter" : "Clang_OSCommandInjection",
+    "clogFilter" : "Clog_OSCommandInjection",
+    "fileFilter" : "CWE78_OS_Command_Injection__char_console_execl_01\\.c$",
+    "fileExcludeFilter" : "_w32_|w32spawn",
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection/output.0"
+}

@@ -39,4 +39,7 @@ classifyClangReport r
   | r.desc =~ "Value stored to (.*) during its initialization is never read \\[clang-analyzer-deadcode.DeadStores\\]" = Clang_DeadStores
   | r.desc =~ "Call to function (.*) is insecure as it does not provide security checks (.*) \\[clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling\\]" = Clang_DeprecatedOrUnsafeBufferHandling
   | r.desc =~ "Array access (.*) results in a null pointer dereference \\[clang-analyzer-core.NullDereference\\]" = Clang_DereferenceOfUndefinedPointerValue
+  | r.desc =~ "CWE-119.*\\[clang-analyzer-security.insecureAPI.strcpy\\]" = Clang_InsecureAPIStrcpy
+  | r.desc =~ "Address of stack memory associated with local variable .* is still referred to by the global variable .* upon returning to the caller.  This will be a dangling reference \\[clang-analyzer-core.StackAddressEscape\\]" = Clang_StackAddressEscape
+  | r.desc =~ "\\[clang-diagnostic-incompatible-pointer-types\\]" = Clang_IncompatiblePointerTypes
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"

@@ -19,15 +19,20 @@ data ReportKind = WarningReport
 
 data ReportClass = Juliet_CWE457
                  | Juliet_CWE416
+                 | Juliet_CWE78
                  | Clog_UninitializedVarUse
                  | Clog_UninitializedMemRead
                  | Clog_UseAfterFree
+                 | Clog_OSCommandInjection
                  | Clang_UninitializedCallArgument
                  | Clang_DereferenceOfUndefinedPointerValue
                  | Clang_PotentialLeakOfMemory
                  | Clang_UseAfterFree
                  | Clang_DeadStores
                  | Clang_DeprecatedOrUnsafeBufferHandling
+                 | Clang_InsecureAPIStrcpy
+                 | Clang_StackAddressEscape
+                 | Clang_IncompatiblePointerTypes
                  | NotRelevant
                  deriving (Eq, Show, Ord)
 
