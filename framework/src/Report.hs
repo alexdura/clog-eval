@@ -1,8 +1,6 @@
 module Report (Report (..), ReportKind (..), ReportClass (..), reportIntersect, reportDiff) where
 
 import Data.List
-import GHC.Exts (the)
-import GHC.ExecutionStack (Location(functionName))
 
 data Report = Report {
   file :: FilePath,
@@ -44,6 +42,7 @@ reportClassEq Juliet_CWE457 Clang_UninitializedCallArgument = True
 reportClassEq Juliet_CWE457 Clang_DereferenceOfUndefinedPointerValue = True
 reportClassEq Juliet_CWE416 Clang_UseAfterFree = True
 reportClassEq Juliet_CWE416 Clog_UseAfterFree = True
+reportClassEq Juliet_CWE78 Clog_OSCommandInjection = True
 
 reportClassEq r1 r2
   | r1 > r2 = reportClassEq r2 r1
