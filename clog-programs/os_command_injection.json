@@ -9,7 +9,7 @@
     "manifestFilter" : "CWE78.*",
     "clangFilter" : "Clang_OSCommandInjection",
     "clogFilter" : "Clog_OSCommandInjection",
-    "fileFilter" : "CWE78_OS_Command_Injection__char_console_system_.*\\.c",
+    "fileFilter" : "CWE78_.*\\.c$",
     "fileExcludeFilter" : "_w32_|w32spawn",
     "outputDir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection/output.1"
 }
