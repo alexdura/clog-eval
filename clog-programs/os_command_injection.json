@@ -4,12 +4,12 @@
     "clogXargs" : ["-P", "profile.json"],
     "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
-    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/os_command_injection.2.mdl",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/os_command_injection.3.mdl",
     "manifest" : "/work/projects/juliet/C/manifest.xml",
     "manifestFilter" : "CWE78.*",
     "clangFilter" : "Clang_OSCommandInjection",
     "clogFilter" : "Clog_OSCommandInjection",
     "fileFilter" : "CWE78_.*\\.c$",
     "fileExcludeFilter" : "_w32_|w32spawn",
-    "outputDir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection/output.2"
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection/output.3"
 }

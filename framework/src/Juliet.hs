@@ -111,7 +111,7 @@ rules opts = do
     need ["clog.analysis.csv"]
     clogReport <- liftIO $ extractReportsCSV "clog.analysis.csv" -- extract the report produced by clog
     groundReport <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
-    dumpStats opts.fileFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport tpCsv fpCsv fnCsv
+    dumpStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport tpCsv fpCsv fnCsv
 
   -- clasify the Clang reports between true positive and false positives
   ["clang.true.positive.csv",
@@ -120,7 +120,7 @@ rules opts = do
     need ["clang.analysis.csv"]
     clangReport <- liftIO $ extractReportsCSV "clang.analysis.csv" -- extract the report produced by clang
     groundReport <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
-    dumpStats opts.fileFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport tpCsv fpCsv fnCsv
+    dumpStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport tpCsv fpCsv fnCsv
 
 
   -- post-process the output of the Clang static analyzer
@@ -169,7 +169,7 @@ rules opts = do
     groundReport <- liftIO $ extractReportsXML opts.manifest
     liftIO $ do
       putStrLn "Clog precission/recall stats"
-      printStats opts.fileFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport
+      printStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport
 
   phony "stats-clang" $ do
     need ["clang.analysis.csv"]
@@ -177,13 +177,14 @@ rules opts = do
     groundReport <- liftIO $ extractReportsXML opts.manifest
     liftIO $ do
       putStrLn "Clang precission/recall stats"
-      printStats opts.fileFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport
+      printStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport
 
 
   phony "clean" $ do
     removeFilesAfter (opts.dir </> opts.outputDir) ["*"]
 
 printStats :: String -- file filter
+           -> Maybe String -- file exclude filter
            -> String -- ground truth filter (manifest)
            -> String -- report filter
            -> (Report -> ReportClass) -- report classifier
@@ -191,9 +192,11 @@ printStats :: String -- file filter
            -> [Report] -- tool reports
            -> IO ()
 
-printStats fileFilter manifestFilter reportFilter classifier  groundReport toolReport = do
-  let relevantG = filter (\rep -> rep.file =~ fileFilter && show (classifyJulietReport rep) =~ manifestFilter) groundReport
-      relevantR = filter (\rep -> rep.file =~ fileFilter && show (classifier rep) =~ reportFilter) $
+printStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  groundReport toolReport = do
+  let relevantG = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
+                           && show (classifyJulietReport rep) =~ manifestFilter) groundReport
+      relevantR = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
+                           && show (classifier rep) =~ reportFilter) $
           map (\rep -> rep { file = takeFileName rep.file }) toolReport
       tp = reportIntersect classifier classifyJulietReport relevantR relevantG
       fp = reportDiff classifier classifyJulietReport relevantR relevantG
@@ -204,6 +207,7 @@ printStats fileFilter manifestFilter reportFilter classifier  groundReport toolR
     putStrLn ((printf "False negatives %d/%d" (length fn) (length relevantG)) :: String)
 
 dumpStats :: String -- file filter
+           -> Maybe String -- file exclude filter
            -> String -- ground truth filter (manifest)
            -> String -- report filter
            -> (Report -> ReportClass) -- report classifier
@@ -213,9 +217,11 @@ dumpStats :: String -- file filter
            -> FilePath -- false positive
            -> FilePath -- flase negative
            -> Action ()
-dumpStats fileFilter manifestFilter reportFilter classifier  groundReport toolReport tpCsv fpCsv fnCsv = do
-  let relevantG = filter (\rep -> rep.file =~ fileFilter && show (classifyJulietReport rep) =~ manifestFilter) groundReport
-      relevantR = filter (\rep -> rep.file =~ fileFilter && show (classifier rep) =~ reportFilter) $
+dumpStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  groundReport toolReport tpCsv fpCsv fnCsv = do
+  let relevantG = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
+                           && show (classifyJulietReport rep) =~ manifestFilter) groundReport
+      relevantR = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
+                           && show (classifier rep) =~ reportFilter) $
           map (\rep -> rep { file = takeFileName rep.file }) toolReport
       tp = reportIntersect classifier classifyJulietReport relevantR relevantG
       fp = reportDiff classifier classifyJulietReport relevantR relevantG
