@@ -1,7 +1,7 @@
 {
     "dir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection",
     "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer-*,clang-analyzer-alpha.security.taint.*"],
-    "clogXargs" : ["-P", "profile.json"],
+    "clogXargs" : [],
     "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
     "clogProgramPath" : "/work/projects/clog-eval/clog-programs/os_command_injection.3.mdl",

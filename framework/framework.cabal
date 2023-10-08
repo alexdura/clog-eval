@@ -32,6 +32,7 @@ library
       Config
       Juliet
       Lib
+      Magma
       Project
       Report
   other-modules:

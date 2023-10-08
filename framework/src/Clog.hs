@@ -7,3 +7,4 @@ classifyClogReport (Report _ _ _ "UninitializedMemRead" _) = Clog_UninitializedM
 classifyClogReport (Report _ _ _ "UninitializedVarUse" _) = Clog_UninitializedVarUse
 classifyClogReport (Report _ _ _ "UseAfterFree" _) = Clog_UseAfterFree
 classifyClogReport (Report _ _ _ "OSCommandInjection" _) = Clog_OSCommandInjection
+classifyClogReport (Report _ _ _ "NullPointerDereference" _) = Clog_NullPointerDereference

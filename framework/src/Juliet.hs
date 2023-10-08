@@ -28,6 +28,7 @@ classifyJulietReport :: Report -> ReportClass
 classifyJulietReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = Juliet_CWE457
 classifyJulietReport (Report _ _ _ "CWE-416: Use After Free" _) = Juliet_CWE416
 classifyJulietReport (Report _ _ _ "CWE-078: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')" _) = Juliet_CWE78
+classifyJulietReport (Report _ _ _ "CWE-476: NULL Pointer Dereference" _) = Juliet_CWE476
 classifyJulietReport _ = NotRelevant
 
 
