@@ -35,6 +35,7 @@ dependencies:
 - filepath
 - containers
 - split
+- vector
 
 ghc-options:
 - -Wall

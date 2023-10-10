@@ -1,0 +1,16 @@
+EDB('InputRanges, "ground.truth.csv", "csv").
+
+InputRanges("", "", "", "") :- NEQ(0, 0).
+
+FuncBody($f, name) :- <: $t $f (..) { .. } :>, name = c_name($f).
+FuncBody($f, name) :- <: $t $f () { .. } :>, name = c_name($f).
+
+FileNames(filename) :- FuncBody(f, _), filename = c_src_file(f).
+
+OutputRanges(cve, cwe, filename, line_start, line_end) :- FuncBody(f, function),
+                                                          filename = c_src_file(f),
+                                                          InputRanges(cve, cwe, _, function),
+                                                          line_start = c_src_line_start(f),
+                                                          line_end = c_src_line_end(f).
+
+OUTPUT('OutputRanges, "func.range.csv", "csv").

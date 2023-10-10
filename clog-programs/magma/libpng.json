@@ -1,0 +1,8 @@
+{
+    "dir" : "/work/projects/magma/targets/libpng",
+    "groundTruth" : "/work/projects/magma/dataset/libpng/cve_data.json",
+    "includes" : ["/work/projects/llvm-project/build/lib/clang/16/include"],
+    "clangFilter" : "Clang_NullDereference",
+    "clogFilter" : "Clog_NullPointerDereference",
+    "outputDir" : "/work/projects/magma/output/libpng"
+}

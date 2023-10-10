@@ -10,6 +10,7 @@ import Data.Aeson
 
 import qualified Project
 import qualified Juliet
+import qualified Magma
 
 projects :: [Project.Project]
 projects = [
@@ -20,20 +21,21 @@ projects = [
 
 data Options = Options {
   mode :: String,
-  desc :: FilePath
+  desc :: FilePath,
+  tool :: FilePath
   } deriving (Show)
 
 
 cliOptions = Options
-  <$> strOption (long "mode" <> metavar "MODE" <> help "Mode: 'juliet', 'project'" <> showDefault <> value "juliet")
+  <$> strOption (long "mode" <> metavar "MODE" <> help "Mode: 'juliet', 'project', 'magma'" <> showDefault <> value "juliet")
   <*> strOption (long "desc" <> metavar "DESC" <> help "Run description")
+  <*> strOption (long "tool" <> metavar "TOOL" <> help "Tool description" <> showDefault <> value "/dev/null")
 
 
-
-handleOptions (Options "project"  _) = forM_ projects $
+handleOptions (Options "project"  _ _) = forM_ projects $
                                       \p -> withCurrentDirectory (Project.path p) $ shake shakeOptions {shakeVerbosity=Verbose} Project.buildProject'
 
-handleOptions (Options "juliet" desc) = do
+handleOptions (Options "juliet" desc _) = do
   jo <- eitherDecodeFileStrict desc :: IO (Either String Juliet.JulietOpts)
   case jo of
     Left m -> putStrLn m
@@ -41,6 +43,18 @@ handleOptions (Options "juliet" desc) = do
                   Juliet.runClog j
                   Juliet.runClang j
 
+handleOptions (Options "magma" desc tool) = do
+  print desc
+  print tool
+  po <- eitherDecodeFileStrict desc :: IO (Either String Magma.ProjectOpts)
+  case po of
+    Left m -> putStrLn m
+    Right p -> do print p
+                  to <- eitherDecodeFileStrict tool :: IO (Either String Magma.ToolOpts)
+                  case to of
+                    Left m -> putStrLn m
+                    Right t -> do print t
+                                  Magma.runClang t p
 
 main :: IO ()
 main = let opts = info (cliOptions <**> helper)

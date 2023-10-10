@@ -1,0 +1,7 @@
+{
+    "clangXargs" : ["--checks=clang-analyzer-core.NullDereference"],
+    "clogXargs" : [],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/null_dereference.3.mdl",
+    "clogUtilPath" : "/work/projects/clog-eval/clog-programs/util/function_ranges.mdl"
+}

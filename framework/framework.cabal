@@ -56,6 +56,7 @@ library
     , split
     , text
     , time
+    , vector
   default-language: Haskell2010
 
 executable framework-exe
@@ -82,6 +83,7 @@ executable framework-exe
     , split
     , text
     , time
+    , vector
   default-language: Haskell2010
 
 test-suite framework-test
@@ -109,4 +111,5 @@ test-suite framework-test
     , split
     , text
     , time
+    , vector
   default-language: Haskell2010
