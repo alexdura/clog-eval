@@ -25,10 +25,10 @@ import Clog
 
 ------------------------------ Report ------------------------------
 classifyJulietReport :: Report -> ReportClass
-classifyJulietReport (Report _ _ _ "CWE-457: Use of Uninitialized Variable" _) = Juliet_CWE457
-classifyJulietReport (Report _ _ _ "CWE-416: Use After Free" _) = Juliet_CWE416
-classifyJulietReport (Report _ _ _ "CWE-078: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')" _) = Juliet_CWE78
-classifyJulietReport (Report _ _ _ "CWE-476: NULL Pointer Dereference" _) = Juliet_CWE476
+classifyJulietReport (Report _ _ _ _ _ "CWE-457: Use of Uninitialized Variable" _) = CWE457
+classifyJulietReport (Report _ _ _ _ _ "CWE-416: Use After Free" _) = CWE416
+classifyJulietReport (Report _ _ _ _ _ "CWE-078: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')" _) = CWE78
+classifyJulietReport (Report _ _ _ _ _ "CWE-476: NULL Pointer Dereference" _) = CWE476
 classifyJulietReport _ = NotRelevant
 
 
@@ -256,15 +256,11 @@ extractReportXML = deep (isElem >>> hasName "file") >>>
     flaw <- deep (isElem >>> hasName "flaw") -< x
     flawLine <- getAttrValue "line" -< flaw
     flawName <- getAttrValue "name" -< flaw
-    returnA -< Report file ((read flawLine)::Int) 0 flawName OtherReport
+    returnA -< simpleReport file ((read flawLine)::Int) 0 flawName OtherReport
 
 extractReportsXML :: FilePath -> IO [Report]
 extractReportsXML f = runX (readDocument [withValidate no] f >>> extractReportXML)
 
-extractReportsCSV :: FilePath -> IO [Report]
-extractReportsCSV f = do
-  Right csv <- parseCSVFromFile f
-  return $ fmap (\[f, l, c, err] -> Report f ((read l)::Int) ((read c)::Int) err OtherReport) $ filter (/= [""]) csv
 
 clean :: JulietOpts -> IO ()
 clean opts = do

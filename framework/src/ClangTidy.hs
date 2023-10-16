@@ -17,13 +17,13 @@ processClangTidyOutput outs = let chunks = split (dropInitBlank $ keepDelimsL $ 
 extractReportClang :: String -> Maybe Report
 extractReportClang l = do
   (_, _, _, [f, l, c, k, m]) <- l =~~ "(.+):(.+):(.+): (.+): (.+)" :: Maybe (String, String, String, [String])
-  return $ Report f (read l) (read c) m (case k of
-                                           "warning" -> WarningReport
-                                           "error" -> ErrorReport
-                                           _ -> OtherReport)
+  return $ simpleReport f (read l) (read c) m (case k of
+                                                  "warning" -> WarningReport
+                                                  "error" -> ErrorReport
+                                                  _ -> OtherReport)
 
 extractChecker :: Report -> Maybe String
-extractChecker (Report _ _ _ desc WarningReport) = do
+extractChecker (Report _ _ _ _ _ desc WarningReport) = do
   (_, _, _, m:_) <- desc =~~ "\\[([^[:space:]]+)\\]" :: Maybe (String, String, String, [String])
   return m
 extractChecker _ = Nothing
@@ -36,7 +36,7 @@ classifyClangReport r
   | r.desc =~ "Access to field (.*) results in a dereference of an undefined\
               \ pointer value (.*)\\[clang-analyzer-core.NullDereference\\]" = Clang_DereferenceOfUndefinedPointerValue
   | r.desc =~ "Use of memory after it is freed \\[clang-analyzer-unix.Malloc\\]" = Clang_UseAfterFree
-  | r.desc =~ "Value stored to (.*) during its initialization is never read \\[clang-analyzer-deadcode.DeadStores\\]" = Clang_DeadStores
+  | r.desc =~ "Value stored to (.*) is never read \\[clang-analyzer-deadcode.DeadStores\\]" = Clang_DeadStores
   | r.desc =~ "Call to function (.*) is insecure as it does not provide security checks (.*) \\[clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling\\]" = Clang_DeprecatedOrUnsafeBufferHandling
   | r.desc =~ "Array access (.*) results in a null pointer dereference \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
   | r.desc =~ "Access to field (.*) results in a dereference of a null pointer (.*)\\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
@@ -47,4 +47,5 @@ classifyClangReport r
   | r.desc =~ "The (.*) operand of (.*) is a garbage value \\[clang-analyzer-core.UndefinedBinaryOperatorResult\\]" = Clang_UndefinedBinaryOperatorResult
   | r.desc =~ "Assigned value is garbage or undefined \\[clang-analyzer-core.uninitialized.Assign\\]" = Clang_UninitializedAssign
   | r.desc =~ "Dereference of null pointer (.*) \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
+  | r.desc =~ "Null pointer passed to (.*) \\[clang-analyzer-core.NonNullParamChecker\\]" = Clang_NonNullParamChecker
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"

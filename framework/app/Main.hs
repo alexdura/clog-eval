@@ -54,6 +54,7 @@ handleOptions (Options "magma" desc tool) = do
                   case to of
                     Left m -> putStrLn m
                     Right t -> do print t
+                                  Magma.runClog t p
                                   Magma.runClang t p
 
 main :: IO ()

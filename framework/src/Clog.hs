@@ -1,10 +1,13 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Clog (classifyClogReport) where
 
 import Report
 
 classifyClogReport :: Report -> ReportClass
-classifyClogReport (Report _ _ _ "UninitializedMemRead" _) = Clog_UninitializedMemRead
-classifyClogReport (Report _ _ _ "UninitializedVarUse" _) = Clog_UninitializedVarUse
-classifyClogReport (Report _ _ _ "UseAfterFree" _) = Clog_UseAfterFree
-classifyClogReport (Report _ _ _ "OSCommandInjection" _) = Clog_OSCommandInjection
-classifyClogReport (Report _ _ _ "NullPointerDereference" _) = Clog_NullPointerDereference
+
+classifyClogReport r | r.desc == "UninitializedMemRead" = Clog_UninitializedMemRead
+                     | r.desc == "UninitializedVarUse" = Clog_UninitializedVarUse
+                     | r.desc == "UseAfterFree" = Clog_UseAfterFree
+                     | r.desc == "OSCommandInjection" = Clog_OSCommandInjection
+                     | r.desc == "NullPointerDereference" = Clog_NullPointerDereference

@@ -49,10 +49,6 @@ instance ToJSON ProjectOpts
 instance ToJSON ToolOpts
 
 
-runClang :: ToolOpts -> ProjectOpts -> IO ()
-
-runClog = undefined
-
 rules :: ToolOpts -> ProjectOpts -> Rules()
 rules topts popts = do
   let compile_commands = popts.dir </> "compile_commands.json"
@@ -106,11 +102,50 @@ rules topts popts = do
       topts.clogProgramPath
     writeFile' time (show t)
 
-  "func.range.csv" %> \out -> do
+  compareReport "clang" classifyClangReport classifyMagmaReport
+  compareReport "clog" classifyClogReport classifyMagmaReport
+
+  "func.ranges.csv" %> \out -> do
     need [popts.groundTruth, sources_csv, patched_compile_commands]
     Just jsonGT <- liftIO (decodeFileStrict popts.groundTruth :: IO (Maybe Value))
     let tabularGT = (\(t0, t1, t2, t3) -> [t0, t1, t2, t3]) <$> flatten jsonGT
     writeFile' out (printCSV tabularGT)
+
+  "ground.truth.csv" %> \_ -> do
+    need [topts.clogUtilPath, "func.ranges.csv"]
+    cmd (FileStdout "clog.util.out") (FileStderr "clog.util.err")
+      "java" "-jar" topts.clogJar
+      "-lang" "c4"
+      "-S" sources_csv
+      ["-Xclang=-p ."]
+      topts.clogXargs
+      topts.clogUtilPath
+
+
+compareReport :: [Char] -> ReportClassifier -> ReportClassifier -> Rules ()
+compareReport tool clt clg =
+  [tool ++ ".true.positive.csv", tool ++ ".false.positive.csv", tool ++ ".false.negative.csv"] &%> \[otp, ofp, ofn] -> do
+    need ["ground.truth.csv", tool ++ ".analysis.csv"]
+    toolReport <- liftIO $ extractReportsCSV $ tool ++ ".analysis.csv"
+    groundReport <- liftIO $ do
+      Right csv <- parseCSVFromFile "ground.truth.csv"
+      return $ (\[cve, cwe, f, ls, le, _] -> Report f ((read ls)::Int) (0::Int) ((read le)::Int) (0::Int) cwe OtherReport) <$> Prelude.filter (/= [""]) csv
+    liftIO $ print toolReport
+    liftIO $ print groundReport
+    let overalps r1 r2 = file r1 == file r2 &&
+                         not (line r1 > endLine r2 || line r2 > endLine r1)
+        tps = [r | r <- toolReport, m <- groundReport, r `overalps` m]
+        fps = [r | r <- toolReport, _ <- [r `overalps` m | m <- groundReport]]
+        fns = [m | m <- groundReport, _ <- [r `overalps` m | r <- toolReport]]
+        toCSVLine r = [file r, show $ line r, desc r]
+    liftIO $ do
+      print tps
+      print fps
+      print fns
+      writeFile' otp (printCSV $ toCSVLine <$> tps)
+      writeFile' ofp (printCSV $ toCSVLine <$> fps)
+      writeFile' ofn (printCSV $ toCSVLine <$> fns)
+
 
 flatten :: Value -> [(String, -- CVE
                       String, -- CWE
@@ -128,11 +163,21 @@ flatten (Object o) = flip foldMapWithKey o (\cve (Object r) ->
 
 flatten _ = error "Expecting a dictionary."
 
+classifyMagmaReport :: ReportClassifier
+classifyMagmaReport r | r.desc == "CWE-476" = CWE476
+                      | otherwise = NotRelevant
+
+runClang :: ToolOpts -> ProjectOpts -> IO ()
 runClang topts popts = do
   createDirectoryIfMissing True popts.outputDir
   withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-    want ["srcs.csv",
-          "clang.analysis.csv",
-          "func.range.csv",
-          "clog.analysis.csv"]
+    want ["clang.true.positive.csv", "clang.false.positive.csv", "clang.false.negative.csv"]
+    rules topts popts
+
+
+runClog :: ToolOpts -> ProjectOpts -> IO ()
+runClog topts popts = do
+  createDirectoryIfMissing True popts.outputDir
+  withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
+    want ["clog.true.positive.csv", "clog.false.positive.csv", "clog.false.negative.csv"]
     rules topts popts
