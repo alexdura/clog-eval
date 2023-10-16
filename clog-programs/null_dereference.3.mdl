@@ -15,9 +15,8 @@ NullExpr(e) :- StaticNullExpr(e).
 NullExpr(e) :- e <: $l = $r :>, NullExpr($r).
 NullExpr(e) :- e <: ($t) $r :>, NullExpr($r).
 
-
 NullVar(cfg_loc, d) :- VarAssign(cfg_loc, d, e), NullExpr(e).
-NullExpr($v) :- <: $v :>, d = c_decl($v), NullVar($v, d).
+NullExpr($v) :- NullVar($v, d), <: $v :>, d = c_decl($v).
 
 NullVar(succ_loc, d) :- NullVar(loc, d), CFG_SUCC(loc, succ_loc), NOT(VarAssign(succ_loc, d, _)), NOT(NotNullSucc(succ_loc, d)).
 
