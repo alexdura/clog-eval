@@ -94,19 +94,23 @@ rules topts popts = do
                   (processClangTidyOutput ls)
     writeFile' out (printCSV reports)
 
-  "func.range.csv" %> \out -> do
-    need [popts.groundTruth, sources_csv, patched_compile_commands]
-    Just jsonGT <- liftIO (decodeFileStrict popts.groundTruth :: IO (Maybe Value))
-    let tabularGT = fmap (\(t0, t1, t2, t3) -> [t0, t1, t2, t3]) $ flatten jsonGT
-    writeFile' "ground.truth.csv" (printCSV tabularGT)
-    cmd "java" "-jar" topts.clogJar topts.clogUtilPath
+  ["clog.analysis.csv", "clog.analysis.time"] &%> \[_, time] -> do
+    need [sources_csv, patched_compile_commands, topts.clogProgramPath, topts.clogJar]
+    (CmdTime t) <- cmd (FileStdout "clog.analysis.out") (FileStderr "clog.analysis.err")
+      "java" "-jar" topts.clogJar
       "-lang" "c4"
       "-S" sources_csv
       ["-Xclang=-p ."]
       "-D" "."
-      "-F" "."
-      "-debug"
+      topts.clogXargs
+      topts.clogProgramPath
+    writeFile' time (show t)
 
+  "func.range.csv" %> \out -> do
+    need [popts.groundTruth, sources_csv, patched_compile_commands]
+    Just jsonGT <- liftIO (decodeFileStrict popts.groundTruth :: IO (Maybe Value))
+    let tabularGT = (\(t0, t1, t2, t3) -> [t0, t1, t2, t3]) <$> flatten jsonGT
+    writeFile' out (printCSV tabularGT)
 
 flatten :: Value -> [(String, -- CVE
                       String, -- CWE
@@ -127,5 +131,8 @@ flatten _ = error "Expecting a dictionary."
 runClang topts popts = do
   createDirectoryIfMissing True popts.outputDir
   withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-    want ["srcs.csv", "clang.analysis.csv", "func.range.csv"]
+    want ["srcs.csv",
+          "clang.analysis.csv",
+          "func.range.csv",
+          "clog.analysis.csv"]
     rules topts popts
