@@ -10,12 +10,16 @@ StaticNullExpr(e) :- e <: NULL :>.
 StaticNullExpr(e) :- e <: $l = $r :>, StaticNullExpr($r).
 StaticNullExpr(e) :- e <: ($t) $r :>, StaticNullExpr($r).
 
-
 NullExpr(e) :- StaticNullExpr(e).
-NullExpr(e) :- e <: $l = $r :>, NullExpr($r).
-NullExpr(e) :- e <: ($t) $r :>, NullExpr($r).
 
-NullVar(cfg_loc, d) :- VarAssign(cfg_loc, d, e), NullExpr(e).
+# Replace the rule NullExpr(e) :- e <: $l = $r :>, NullExpr($r).
+# with another rule that allows for 'atNode' matching
+NullExpr(e) :- NullExpr($r), e = c_parent($r), node_to_id(e) != 0, e <: $l = $r :>.
+# Replace the NullExpr(e) :- e <: ($t) $r :>, NullExpr($r).
+# with another rule that allows for 'atNode' matching
+NullExpr(e) :- NullExpr($r), e = c_parent($r), node_to_id(e) != 0, e <: ($t) $r :>.
+
+NullVar(cfg_loc, d) :- NullExpr(e), VarAssign(cfg_loc, d, e).
 NullExpr($v) :- NullVar($v, d), <: $v :>, d = c_decl($v).
 
 NullVar(succ_loc, d) :- NullVar(loc, d), CFG_SUCC(loc, succ_loc), NOT(VarAssign(succ_loc, d, _)), NOT(NotNullSucc(succ_loc, d)).
@@ -38,7 +42,7 @@ NotNullSucc(s, d) :- loc <: if ($v == $e) return ; :>, CFG_SUCC(loc, s), d = c_d
 NotNullSucc(s, d) :- loc <: if ($v == $e) { .. return ; .. } :>, CFG_SUCC(loc, s), d = c_decl($v), node_to_id(d) != 0, StaticNullExpr($e).
 
 
-NullVarDebug(l, c, name) :- NullVar(cfg_loc, d), name = c_name(d), l = c_src_line_start(cfg_loc), c = c_src_col_start(cfg_loc).
+# NullVarDebug(l, c, name) :- NullVar(cfg_loc, d), name = c_name(d), l = c_src_line_start(cfg_loc), c = c_src_col_start(cfg_loc).
 
 NullPtrDeref(cfg_loc) :- NullVar(cfg_loc, v), cfg_loc <: *$v :>, v == c_decl($v).
 NullPtrDeref(cfg_loc) :- NullVar(cfg_loc, v), cfg_loc <: $v[$_] :>, v == c_decl($v).
@@ -64,17 +68,17 @@ InterProceduralFlowReturn(src_cfg_loc, dst_cfg_loc, $e) :- dst_cfg_loc <: $c(..)
                                                            $callee = c_decl($c),
                                                            node_to_id($callee) != 0,
                                                            <: $rt $callee(..) { .. } :>,
-                                                           src_cfg_loc <: return $e; :>,
-                                                           c_is_ancestor($callee, src_cfg_loc) != 0.
+                                                           @ $callee src_cfg_loc <: return $e; :>.
+
 
 # Interprocedural rules
 # TODO: Add call-site sensitivity
-NullVar(entry, d) :- InterProceduralFlowCall(_, _, entry, e, d), NullExpr(e).
-NullExpr(dst_loc) :- InterProceduralFlowReturn(_, dst_loc, e), NullExpr(e).
+# NullVar(entry, d) :- InterProceduralFlowCall(_, _, entry, e, d), NullExpr(e).
+# NullExpr(dst_loc) :- InterProceduralFlowReturn(_, dst_loc, e), NullExpr(e).
 
 
-NullPtrDerefDetail("NullPointerDereference", file, func, l, c) :- NullPtrDeref(loc), file = c_src_file(loc), func = c_name(c_enclosing_function(loc)),
-                                             l = c_src_line_start(loc), c = c_src_col_start(loc).
+NullPtrDerefDetail(file, l, c, "NullPointerDereference") :- NullPtrDeref(loc), file = c_src_file(loc),
+                                                            l = c_src_line_start(loc), c = c_src_col_start(loc).
 
 ### End of interprocedural analysis
 

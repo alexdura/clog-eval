@@ -1,6 +1,6 @@
 {
     "clangXargs" : ["--checks=clang-analyzer-core.NullDereference"],
-    "clogXargs" : [],
+    "clogXargs" : ["-P", "profile.json"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
     "clogProgramPath" : "/work/projects/clog-eval/clog-programs/magma/null_dereference.0.mdl",
     "clogUtilPath" : "/work/projects/clog-eval/clog-programs/util/function_ranges.mdl"

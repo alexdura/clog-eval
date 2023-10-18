@@ -15,6 +15,7 @@ import Development.Shake.FilePath
 import GHC.Generics
 import System.Directory
 import Text.CSV
+import Text.Regex.TDFA
 import qualified Data.Vector as Vector
 import qualified Clang.CompilationDatabase as CDB
 
@@ -48,6 +49,8 @@ instance FromJSON ToolOpts
 instance ToJSON ProjectOpts
 instance ToJSON ToolOpts
 
+acceptFile :: FilePath -> Bool
+acceptFile f = f =~ ".*\\.c"
 
 rules :: ToolOpts -> ProjectOpts -> Rules()
 rules topts popts = do
@@ -59,7 +62,7 @@ rules topts popts = do
   sources_csv %> \out -> do
     need [compile_commands]
     Just cdb <- liftIO (decodeFileStrict compile_commands :: IO (Maybe CDB.CompilationDatabase))
-    let files = (\e -> [unpack (CDB.directory e) </> unpack (CDB.file e), "A"]) <$> cdb
+    let files = (\e -> [unpack (CDB.directory e) </> unpack (CDB.file e), "A"]) <$> Prelude.filter (acceptFile . unpack . CDB.file) cdb
     liftIO $ writeFile' out (printCSV files)
 
   patched_compile_commands %> \out -> do
@@ -71,7 +74,7 @@ rules topts popts = do
   ["clang.analysis.out", "clang.analysis.time"] &%> \[out, time] -> do
     need [patched_compile_commands]
     Just cdb <- liftIO (decodeFileStrict patched_compile_commands :: IO (Maybe CDB.CompilationDatabase))
-    let files = (\e -> unpack (CDB.directory e) </> unpack (CDB.file e)) <$> cdb
+    let files = (\e -> unpack (CDB.directory e) </> unpack (CDB.file e)) <$> Prelude.filter (acceptFile . unpack . CDB.file) cdb
     (CmdTime t) <- cmd (FileStdout out) (FileStderr "clang.analysis.err")
       "clang-tidy"
       "-p ."
