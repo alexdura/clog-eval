@@ -1,0 +1,3 @@
+WarnCommandInjection("", 0, 0, "OSCommandInjection").
+
+OUTPUT('WarnCommandInjection, "clog.analysis.csv", "csv").
