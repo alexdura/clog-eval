@@ -1,6 +1,51 @@
+# 1 "uncontrolled_format_string.mdl.in"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 31 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+# 32 "<command-line>" 2
+# 1 "uncontrolled_format_string.mdl.in"
+
+
+
+TaintSink("printf", 0).
+
+TaintSink("fprintf", 1).
+
+TaintSink("dprintf", 1).
+
+TaintSink("sprintf", 1).
+
+TaintSink("snprintf", 2).
+
+TaintSink("vprintf", 0).
+
+TaintSink("vfprintf", 1).
+
+TaintSink("vdprintf", 1).
+
+TaintSink("vsprintf", 1).
+
+TaintSink("vsnprintf", 2).
+
+TaintSink("wprintf", 0).
+
+TaintSink("fwprintf", 1).
+
+TaintSink("swprintf", 2).
+
+TaintSink("vwprintf", 0).
+
+TaintSink("vfwprintf", 1).
+
+TaintSink("vswprintf", 2).
+
+# 1 "taint_propagation.mdl" 1
+
+
 ArgIndexRange(0).
 ArgIndexRange(i) :- ArgIndexRange(j), i = j + 1, LT(i, 100).
-# For vararg functions, just mark a fixed range of arguments as tainted
+
 
 TaintSourceArg("fgets", 0).
 TaintSourceReturn("fgets").
@@ -13,16 +58,16 @@ TaintPropagationArgToArg("memcpy", 1, 0).
 TaintPropagationArgToRet("memcpy", 1).
 TaintPropagationArgToArg("strncat", 1, 0).
 
-TaintSink("system", 0).
-TaintSink("execl", i) :- ArgIndexRange(i).
-TaintSink("execlp", i) :- ArgIndexRange(i).
-TaintSink("popen", 0).
+
+TaintSourceArg("function_name", 0) :- NEQ(0, 0).
+TaintSourceReturn("function_name") :- NEQ(0, 0).
+TaintSink("function_name", 0) :- NEQ(0, 0).
 
 
-# Source rules
+
 ExprPointsToTaintedMem($v) :- <: $f (.., $v ,..) :>, f = c_name($f), i = c_index($v), TaintSourceArg(f, i).
 
-# Propagation rules
+
 ExprPointsToTaintedMem(w) :- w <: $v + $_ :>, ExprPointsToTaintedMem($v).
 ExprPointsToTaintedMem($v) :- w <: $v + $_ :>, ExprPointsToTaintedMem(w).
 ExprPointsToTaintedMem(v) :- v <: ($t) $v :>, ExprPointsToTaintedMem($v).
@@ -54,7 +99,6 @@ ExprPointsToTaintedMem(c) :- c <: $f (.., $w, ..) :>,
                                ExprPointsToTaintedMem($w).
 
 
-# Inter-procedural rules
 
 InterProceduralFlowCall($callee, src_cfg_loc, entry, $e, $w) :- src_cfg_loc <: $c(.., $e, ..) :>,
                                  $callee = c_decl($c),
@@ -85,10 +129,10 @@ InterProceduralFlowReturn(src_cfg_loc, dst_cfg_loc, $e) :- dst_cfg_loc <: $c(..)
 
 
 CommandInjection(c) :- c <: $f(.., $v, .. ) :>, ExprPointsToTaintedMem($v), i = c_index($v), n = c_name($f), TaintSink(n, i).
-
-# Intentionally using c_src_line_end instead of c_src_line_start. When the function name is a macro, then
-# line start will point to the definition site of the macro.
-WarnCommandInjection(f, l, 0, "OSCommandInjection") :- CommandInjection(loc), f = c_src_file(loc), l = c_src_line_end(loc).#, c = c_src_col_start(loc).
+# 37 "uncontrolled_format_string.mdl.in" 2
 
 
-OUTPUT('WarnCommandInjection, "clog.analysis.csv", "csv").
+
+WarnUncontrolledFormat(f, l, 0, "UncontrolledFormatString") :- CommandInjection(loc), f = c_src_exp_file(loc), l = c_src_exp_line_start(loc).
+
+OUTPUT('WarnUncontrolledFormat, "clog.analysis.csv", "csv").

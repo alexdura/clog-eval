@@ -33,6 +33,7 @@ library
       Juliet
       Lib
       Magma
+      Program
       Project
       Report
   other-modules:

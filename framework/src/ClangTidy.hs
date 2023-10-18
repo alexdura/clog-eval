@@ -48,4 +48,5 @@ classifyClangReport r
   | r.desc =~ "Assigned value is garbage or undefined \\[clang-analyzer-core.uninitialized.Assign\\]" = Clang_UninitializedAssign
   | r.desc =~ "Dereference of null pointer (.*) \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
   | r.desc =~ "Null pointer passed to (.*) \\[clang-analyzer-core.NonNullParamChecker\\]" = Clang_NonNullParamChecker
+  | r.desc =~ "format string is not a string literal (.*)\\[clang-diagnostic-format-security\\]" = Clang_DiagnosticFormatSecurity
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"

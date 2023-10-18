@@ -1,7 +1,9 @@
+// -*- mode: metadl -*-
+
 ArgIndexRange(0).
 ArgIndexRange(i) :- ArgIndexRange(j), i = j + 1, LT(i, 100).
-# For vararg functions, just mark a fixed range of arguments as tainted
 
+// For vararg functions, just mark a fixed range of arguments as tainted
 TaintSourceArg("fgets", 0).
 TaintSourceReturn("fgets").
 TaintSourceArg("fgetws", 0).
@@ -11,17 +13,18 @@ TaintSourceReturn("getenv").
 
 TaintPropagationArgToArg("memcpy", 1, 0).
 TaintPropagationArgToRet("memcpy", 1).
-
-TaintSink("system", 0).
-TaintSink("execl", i) :- ArgIndexRange(i).
-TaintSink("execlp", i) :- ArgIndexRange(i).
-TaintSink("popen", 0).
+TaintPropagationArgToArg("strncat", 1, 0).
 
 
-# Source rules
+TaintSourceArg("function_name", 0) :- NEQ(0, 0).
+TaintSourceReturn("function_name") :- NEQ(0, 0).
+TaintSink("function_name", 0) :- NEQ(0, 0).
+
+
+// Source rules
 ExprPointsToTaintedMem($v) :- <: $f (.., $v ,..) :>, f = c_name($f), i = c_index($v), TaintSourceArg(f, i).
 
-# Propagation rules
+// Propagation rules
 ExprPointsToTaintedMem(w) :- w <: $v + $_ :>, ExprPointsToTaintedMem($v).
 ExprPointsToTaintedMem($v) :- w <: $v + $_ :>, ExprPointsToTaintedMem(w).
 ExprPointsToTaintedMem(v) :- v <: ($t) $v :>, ExprPointsToTaintedMem($v).
@@ -31,7 +34,7 @@ VarPointsToTaintedMem(w, v) :- ExprPointsToTaintedMem(w), v = c_decl(w), node_to
 VarPointsToTaintedMem(cfg_loc, v) :- cfg_loc <: $v = $e :>, ExprPointsToTaintedMem($e), v = c_decl($v), node_to_id(v) != 0.
 VarPointsToTaintedMem($v, $v) :- <: $t $v = $e :>, ExprPointsToTaintedMem($e).
 
-ExprPointsToTaintedMem($v) :- VarPointsToTaintedMem($v, v), <: $v :>, v = c_decl($v), node_to_id(v) != 0, name = c_name(v).
+ExprPointsToTaintedMem($v) :- VarPointsToTaintedMem($v, v), <: $v :>, v = c_decl($v), node_to_id(v) != 0.
 
 VarDef(s, d) :- s <: $u = $_ :> , d = c_decl($u), node_to_id(d) != 0.
 
@@ -53,8 +56,7 @@ ExprPointsToTaintedMem(c) :- c <: $f (.., $w, ..) :>,
                                ExprPointsToTaintedMem($w).
 
 
-# Inter-procedural rules
-
+// Inter-procedural rules
 InterProceduralFlowCall($callee, src_cfg_loc, entry, $e, $w) :- src_cfg_loc <: $c(.., $e, ..) :>,
                                  $callee = c_decl($c),
                                  node_to_id($callee) != 0,
@@ -84,10 +86,3 @@ InterProceduralFlowReturn(src_cfg_loc, dst_cfg_loc, $e) :- dst_cfg_loc <: $c(..)
 
 
 CommandInjection(c) :- c <: $f(.., $v, .. ) :>, ExprPointsToTaintedMem($v), i = c_index($v), n = c_name($f), TaintSink(n, i).
-
-# Intentionally using c_src_line_end instead of c_src_line_start. When the function name is a macro, then
-# line start will point to the definition site of the macro.
-WarnCommandInjection(f, l, 0, "OSCommandInjection") :- CommandInjection(loc), f = c_src_file(loc), l = c_src_line_end(loc).#, c = c_src_col_start(loc).
-
-
-OUTPUT('WarnCommandInjection, "clog.analysis.csv", "csv").

@@ -4,7 +4,7 @@
     "clogXargs" : [],
     "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
-    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/null_dereference.3.mdl",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/null_dereference.3.mdl",
     "manifest" : "/work/projects/juliet/C/manifest.xml",
     "manifestFilter" : "CWE476.*",
     "clangFilter" : "Clang_NullDereference",

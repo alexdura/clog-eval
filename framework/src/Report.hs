@@ -25,11 +25,13 @@ data ReportClass = CWE457
                  | CWE416
                  | CWE78
                  | CWE476
+                 | CWE134
                  | Clog_UninitializedVarUse
                  | Clog_UninitializedMemRead
                  | Clog_UseAfterFree
                  | Clog_OSCommandInjection
                  | Clog_NullPointerDereference
+                 | Clog_UncontrolledFormatString
                  | Clang_DeadStores
                  | Clang_DeprecatedOrUnsafeBufferHandling
                  | Clang_DereferenceOfUndefinedPointerValue
@@ -43,6 +45,7 @@ data ReportClass = CWE457
                  | Clang_UninitializedCallArgument
                  | Clang_UseAfterFree
                  | Clang_NonNullParamChecker
+                 | Clang_DiagnosticFormatSecurity
                  | NotRelevant
                  deriving (Eq, Show, Ord)
 
@@ -52,11 +55,17 @@ reportClassEq CWE457 Clog_UninitializedMemRead = True
 reportClassEq CWE457 Clog_UninitializedVarUse = True
 reportClassEq CWE457 Clang_UninitializedCallArgument = True
 reportClassEq CWE457 Clang_DereferenceOfUndefinedPointerValue = True
+
 reportClassEq CWE416 Clang_UseAfterFree = True
 reportClassEq CWE416 Clog_UseAfterFree = True
+
 reportClassEq CWE78 Clog_OSCommandInjection = True
+
 reportClassEq CWE476 Clang_NullDereference = True
 reportClassEq CWE476 Clog_NullPointerDereference = True
+
+reportClassEq CWE134 Clang_DiagnosticFormatSecurity = True
+reportClassEq CWE134 Clog_UncontrolledFormatString = True
 
 reportClassEq r1 r2
   | r1 > r2 = reportClassEq r2 r1

@@ -11,3 +11,4 @@ classifyClogReport r | r.desc == "UninitializedMemRead" = Clog_UninitializedMemR
                      | r.desc == "UseAfterFree" = Clog_UseAfterFree
                      | r.desc == "OSCommandInjection" = Clog_OSCommandInjection
                      | r.desc == "NullPointerDereference" = Clog_NullPointerDereference
+                     | r.desc == "UncontrolledFormatString" = Clog_UncontrolledFormatString

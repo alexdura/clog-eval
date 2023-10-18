@@ -1,0 +1,42 @@
+// -*- mode: metadl -*-
+
+//       int printf(const char *format, ...);
+TaintSink("printf", 0).
+//       int fprintf(FILE *stream, const char *format, ...);
+TaintSink("fprintf", 1).
+//       int dprintf(int fd, const char *format, ...);
+TaintSink("dprintf", 1).
+//       int sprintf(char *str, const char *format, ...);
+TaintSink("sprintf", 1).
+//       int snprintf(char *str, size_t size, const char *format, ...);
+TaintSink("snprintf", 2).
+//       int vprintf(const char *format, va_list ap);
+TaintSink("vprintf", 0).
+//       int vfprintf(FILE *stream, const char *format, va_list ap);
+TaintSink("vfprintf", 1).
+//       int vdprintf(int fd, const char *format, va_list ap);
+TaintSink("vdprintf", 1).
+//       int vsprintf(char *str, const char *format, va_list ap);
+TaintSink("vsprintf", 1).
+//       int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+TaintSink("vsnprintf", 2).
+// int wprintf(const wchar_t *format, ...);
+TaintSink("wprintf", 0).
+// int fwprintf(FILE *stream, const wchar_t *format, ...);
+TaintSink("fwprintf", 1).
+// int swprintf(wchar_t *wcs, size_t maxlen, const wchar_t *format, ...);
+TaintSink("swprintf", 2).
+// int vwprintf(const wchar_t *format, va_list args);
+TaintSink("vwprintf", 0).
+// int vfwprintf(FILE *stream, const wchar_t *format, va_list args);
+TaintSink("vfwprintf", 1).
+// int vswprintf(wchar_t *wcs, size_t maxlen, const wchar_t *format, va_list args);
+TaintSink("vswprintf", 2).
+
+#include "taint_propagation.mdl"
+
+// Intentionally using c_src_line_end instead of c_src_line_start. When the function name is a macro, then
+// line start will point to the definition site of the macro.
+WarnUncontrolledFormat(f, l, 0, "UncontrolledFormatString") :- CommandInjection(loc), f = c_src_exp_file(loc), l = c_src_exp_line_start(loc).
+
+OUTPUT('WarnUncontrolledFormat, "clog.analysis.csv", "csv").

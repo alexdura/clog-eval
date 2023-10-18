@@ -29,6 +29,7 @@ classifyJulietReport (Report _ _ _ _ _ "CWE-457: Use of Uninitialized Variable" 
 classifyJulietReport (Report _ _ _ _ _ "CWE-416: Use After Free" _) = CWE416
 classifyJulietReport (Report _ _ _ _ _ "CWE-078: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')" _) = CWE78
 classifyJulietReport (Report _ _ _ _ _ "CWE-476: NULL Pointer Dereference" _) = CWE476
+classifyJulietReport (Report _ _ _ _ _ "CWE-134: Uncontrolled Format String" _) = CWE134
 classifyJulietReport _ = NotRelevant
 
 

@@ -11,6 +11,7 @@ import Data.Aeson
 import qualified Project
 import qualified Juliet
 import qualified Magma
+import qualified Program
 
 projects :: [Project.Project]
 projects = [
@@ -56,6 +57,10 @@ handleOptions (Options "magma" desc tool) = do
                     Right t -> do print t
                                   Magma.runClog t p
                                   Magma.runClang t p
+
+handleOptions (Options "gen-prog" desc _) = do
+  print desc
+  Program.generate desc
 
 main :: IO ()
 main = let opts = info (cliOptions <**> helper)

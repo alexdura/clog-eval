@@ -1,0 +1,8 @@
+{
+    "dir" : "/work/projects/magma/targets/openssl",
+    "groundTruth" : "/work/projects/magma/dataset/openssl/cve_data.json",
+    "includes" : [],
+    "clangFilter" : "Clang_NullDereference",
+    "clogFilter" : "Clog_NullPointerDereference",
+    "outputDir" : "/work/projects/magma/output/openssl"
+}
