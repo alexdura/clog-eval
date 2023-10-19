@@ -46,6 +46,8 @@ data ReportClass = CWE457
                  | Clang_UseAfterFree
                  | Clang_NonNullParamChecker
                  | Clang_DiagnosticFormatSecurity
+                 | Clang_DiagnosticUnusedVariable
+                 | Clang_DiagnosticUninitialized
                  | NotRelevant
                  deriving (Eq, Show, Ord)
 
@@ -55,6 +57,7 @@ reportClassEq CWE457 Clog_UninitializedMemRead = True
 reportClassEq CWE457 Clog_UninitializedVarUse = True
 reportClassEq CWE457 Clang_UninitializedCallArgument = True
 reportClassEq CWE457 Clang_DereferenceOfUndefinedPointerValue = True
+reportClassEq CWE457 Clang_DiagnosticUninitialized = True
 
 reportClassEq CWE416 Clang_UseAfterFree = True
 reportClassEq CWE416 Clog_UseAfterFree = True

@@ -38,9 +38,10 @@ classifyClangReport r
   | r.desc =~ "Use of memory after it is freed \\[clang-analyzer-unix.Malloc\\]" = Clang_UseAfterFree
   | r.desc =~ "Value stored to (.*) is never read \\[clang-analyzer-deadcode.DeadStores\\]" = Clang_DeadStores
   | r.desc =~ "Call to function (.*) is insecure as it does not provide security checks (.*) \\[clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling\\]" = Clang_DeprecatedOrUnsafeBufferHandling
-  | r.desc =~ "Array access (.*) results in a null pointer dereference \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
+  | r.desc =~ "Array access (.*)results in a null pointer dereference \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
   | r.desc =~ "Access to field (.*) results in a dereference of a null pointer (.*)\\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
   | r.desc =~ "Array access (.*) results in an undefined pointer dereference \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
+  | r.desc =~ "Dereference of null pointer(.*)\\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
   | r.desc =~ "CWE-119.*\\[clang-analyzer-security.insecureAPI.strcpy\\]" = Clang_InsecureAPIStrcpy
   | r.desc =~ "Address of stack memory associated with local variable .* is still referred to by the global variable .* upon returning to the caller.  This will be a dangling reference \\[clang-analyzer-core.StackAddressEscape\\]" = Clang_StackAddressEscape
   | r.desc =~ "\\[clang-diagnostic-incompatible-pointer-types\\]" = Clang_IncompatiblePointerTypes
@@ -49,4 +50,7 @@ classifyClangReport r
   | r.desc =~ "Dereference of null pointer (.*) \\[clang-analyzer-core.NullDereference\\]" = Clang_NullDereference
   | r.desc =~ "Null pointer passed to (.*) \\[clang-analyzer-core.NonNullParamChecker\\]" = Clang_NonNullParamChecker
   | r.desc =~ "format string is not a string literal (.*)\\[clang-diagnostic-format-security\\]" = Clang_DiagnosticFormatSecurity
+  | r.desc =~ "unused variable (.*)\\[clang-diagnostic-unused-variable\\]" = Clang_DiagnosticUnusedVariable
+  | r.desc =~ "(.*)\\[clang-diagnostic-unused-but-set-variable\\]" = Clang_DiagnosticUnusedVariable
+  | r.desc =~ "variable(.*)\\[clang-diagnostic-uninitialized\\]" = Clang_DiagnosticUninitialized
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"
