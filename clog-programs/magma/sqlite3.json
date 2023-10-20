@@ -1,0 +1,6 @@
+{
+    "dir" : "/work/projects/magma/targets/sqlite3",
+    "groundTruth" : "/work/projects/magma/dataset/sqlite3/cve_data.json",
+    "includes" : [],
+    "outputDir" : "/work/projects/magma/output/sqlite3"
+}
