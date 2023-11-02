@@ -1,10 +1,10 @@
 {
     "dir" : "/work/projects/juliet/C/testcases/CWE457_Use_of_Uninitialized_Variable",
-    "clangXargs" : ["--checks=clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"],
+    "clangXargs" : ["--checks=-clang-analyzer-*,clang-analyzer-core.uninitialized.Assign,clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Branch"],
     "clogXargs" : [],
     "includes" : ["/work/projects/juliet/C/testcasesupport"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
-    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/uninitialized_variable.10.mdl",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/uninitialized_variable.10.mdl",
     "manifest" : "/work/projects/juliet/C/manifest.xml",
     "manifestFilter" : "CWE457.*",
     "clangFilter" : "Clang_(UninitializedCallArgument|DereferenceOfUndefinedPointerValue)",
