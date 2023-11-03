@@ -202,7 +202,7 @@ printStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  
       relevantR = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
                            && show (classifier rep) =~ reportFilter) $
           map (\rep -> rep { file = takeFileName rep.file }) toolReport
-      tp = reportIntersect classifier classifyJulietReport relevantR relevantG
+      tp = reportIntersect classifyJulietReport classifier relevantG relevantR
       fp = reportDiff classifier classifyJulietReport relevantR relevantG
       fn = reportDiff classifyJulietReport classifier relevantG relevantR
   liftIO $ do
@@ -227,7 +227,7 @@ dumpStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  g
       relevantR = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
                            && show (classifier rep) =~ reportFilter) $
           map (\rep -> rep { file = takeFileName rep.file }) toolReport
-      tp = reportIntersect classifier classifyJulietReport relevantR relevantG
+      tp = reportIntersect classifyJulietReport classifier relevantG relevantR
       fp = reportDiff classifier classifyJulietReport relevantR relevantG
       fn = reportDiff classifyJulietReport classifier relevantG relevantR
       toCsvLine rl = [file rl, show $ line rl , desc rl]

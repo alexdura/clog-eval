@@ -104,9 +104,6 @@ mapToCWE Clang_NullDereference = CWE476
 
 type ReportClassifier = Report -> ReportClass
 
-reportKey :: (Report -> ReportClass) -> Report -> (FilePath, Int, ReportClass)
-reportKey classify r = (file r, line r, mapToCWE $ classify r)
-
 reportEq ::(Report -> ReportClass) -> (Report -> ReportClass) ->  Report -> Report -> Bool
 reportEq cl cr l r = file l == file r && line l == line r && reportClassEq (cl l) (cr r)
 
@@ -128,8 +125,20 @@ reportDiff cl cr = deleteFirstsBy (reportEq cr cl)
 reportIntersect :: (Report -> ReportClass) -> (Report -> ReportClass) -> [Report] -> [Report] -> [Report]
 reportIntersect cl cr = intersectBy (reportEq cl cr)
 
-
 extractReportsCSV :: FilePath -> IO [Report]
 extractReportsCSV f = do
   Right csv <- parseCSVFromFile f
   return $ fmap (\[f, l, c, err] -> Report f ((read l)::Int) ((read c)::Int) ((read l)::Int) ((read c)::Int) err OtherReport) $ filter (/= [""]) csv
+
+
+
+
+reportDiff' _ l [] = ([], l, [])
+reportDiff' _ [] r = ([], [], r)
+reportDiff' k (l:ls) (r:rs) = case compare (k l) (k r) of
+                                LT -> let (i, lo, ro) = reportDiff' k ls (r:rs) in (i, l:lo, ro)
+                                EQ -> let (i, lo, ro) = reportDiff' k ls rs in (l:i, lo, ro)
+                                GT -> let (i, lo, ro) = reportDiff' k (l:ls) rs in (i, lo, r:ro)
+
+reportDiff2 :: Ord a => (Report -> a) -> [Report] -> [Report] -> ([Report], [Report], [Report])
+reportDiff2 k l r = reportDiff' k (sortOn k l) (sortOn k r)
