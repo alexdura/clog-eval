@@ -40,19 +40,19 @@ TaintSink("vfwprintf", 1).
 
 TaintSink("vswprintf", 2).
 
-# 1 "taint_propagation.mdl" 1
-
-
-ArgIndexRange(0).
-ArgIndexRange(i) :- ArgIndexRange(j), i = j + 1, LT(i, 100).
-
-
 TaintSourceArg("fgets", 0).
 TaintSourceReturn("fgets").
 TaintSourceArg("fgetws", 0).
 TaintSourceReturn("fgetws").
 TaintSourceArg("recv", 1).
 TaintSourceReturn("getenv").
+
+
+# 1 "taint_propagation.mdl" 1
+
+
+ArgIndexRange(0).
+ArgIndexRange(i) :- ArgIndexRange(j), i = j + 1, LT(i, 100).
 
 TaintPropagationArgToArg("memcpy", 1, 0).
 TaintPropagationArgToRet("memcpy", 1).
@@ -129,7 +129,7 @@ InterProceduralFlowReturn(src_cfg_loc, dst_cfg_loc, $e) :- dst_cfg_loc <: $c(..)
 
 
 CommandInjection(c) :- c <: $f(.., $v, .. ) :>, ExprPointsToTaintedMem($v), i = c_index($v), n = c_name($f), TaintSink(n, i).
-# 37 "uncontrolled_format_string.mdl.in" 2
+# 45 "uncontrolled_format_string.mdl.in" 2
 
 
 

@@ -33,6 +33,14 @@ TaintSink("vfwprintf", 1).
 // int vswprintf(wchar_t *wcs, size_t maxlen, const wchar_t *format, va_list args);
 TaintSink("vswprintf", 2).
 
+TaintSourceArg("fgets", 0).
+TaintSourceReturn("fgets").
+TaintSourceArg("fgetws", 0).
+TaintSourceReturn("fgetws").
+TaintSourceArg("recv", 1).
+TaintSourceReturn("getenv").
+
+
 #include "taint_propagation.mdl"
 
 // Intentionally using c_src_line_end instead of c_src_line_start. When the function name is a macro, then

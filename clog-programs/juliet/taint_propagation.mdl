@@ -3,14 +3,6 @@
 ArgIndexRange(0).
 ArgIndexRange(i) :- ArgIndexRange(j), i = j + 1, LT(i, 100).
 
-// For vararg functions, just mark a fixed range of arguments as tainted
-TaintSourceArg("fgets", 0).
-TaintSourceReturn("fgets").
-TaintSourceArg("fgetws", 0).
-TaintSourceReturn("fgetws").
-TaintSourceArg("recv", 1).
-TaintSourceReturn("getenv").
-
 TaintPropagationArgToArg("memcpy", 1, 0).
 TaintPropagationArgToRet("memcpy", 1).
 TaintPropagationArgToArg("strncat", 1, 0).
