@@ -53,4 +53,6 @@ classifyClangReport r
   | r.desc =~ "unused variable (.*)\\[clang-diagnostic-unused-variable\\]" = Clang_DiagnosticUnusedVariable
   | r.desc =~ "(.*)\\[clang-diagnostic-unused-but-set-variable\\]" = Clang_DiagnosticUnusedVariable
   | r.desc =~ "variable(.*)\\[clang-diagnostic-uninitialized\\]" = Clang_DiagnosticUninitialized
+  | r.desc =~ "(.*)\\[clang-analyzer-alpha.unix.cstring.OutOfBounds\\]" = Clang_OutOfBounds
+  | r.desc =~ "(.*)\\[clang-analyzer-alpha.security.ArrayBound\\]" = Clang_ArrayBound
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"

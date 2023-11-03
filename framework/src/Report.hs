@@ -14,6 +14,7 @@ data Report = Report {
   kind :: ReportKind
   } deriving (Eq, Show)
 
+simpleReport :: FilePath -> Int -> Int -> String -> ReportKind -> Report
 simpleReport f l c d k = Report f l c l c d k
 
 data ReportKind = WarningReport
@@ -26,6 +27,8 @@ data ReportClass = CWE457
                  | CWE78
                  | CWE476
                  | CWE134
+                 | CWE122
+                 | CWE121
                  | Clog_UninitializedVarUse
                  | Clog_UninitializedMemRead
                  | Clog_UseAfterFree
@@ -48,6 +51,8 @@ data ReportClass = CWE457
                  | Clang_DiagnosticFormatSecurity
                  | Clang_DiagnosticUnusedVariable
                  | Clang_DiagnosticUninitialized
+                 | Clang_OutOfBounds
+                 | Clang_ArrayBound
                  | NotRelevant
                  deriving (Eq, Show, Ord)
 
@@ -69,6 +74,13 @@ reportClassEq CWE476 Clog_NullPointerDereference = True
 
 reportClassEq CWE134 Clang_DiagnosticFormatSecurity = True
 reportClassEq CWE134 Clog_UncontrolledFormatString = True
+
+reportClassEq CWE122 Clang_OutOfBounds = True
+reportClassEq CWE122 Clang_DeprecatedOrUnsafeBufferHandling = True
+
+reportClassEq CWE121 Clang_OutOfBounds = True
+reportClassEq CWE121 Clang_DeprecatedOrUnsafeBufferHandling = True
+reportClassEq CWE121 Clang_ArrayBound = True
 
 reportClassEq r1 r2
   | r1 > r2 = reportClassEq r2 r1

@@ -1,0 +1,14 @@
+{
+    "dir" : "/work/projects/juliet/C/testcases/CWE121_Stack_Based_Buffer_Overflow",
+    "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer*,clang-analyzer-alpha.security.ArrayBound,clang-analyzer-alpha.security.ArrayBoundV2,clang-analyzer-alpha.security.taint.*,clang-analyzer-alpha.unix.cstring.OutOfBounds,clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling"],
+    "clogXargs" : [],
+    "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/null_dereference.0.mdl",
+    "manifest" : "/work/projects/juliet/C/manifest.xml",
+    "manifestFilter" : "CWE121.*",
+    "clangFilter" : "Clang_DeprecatedOrUnsafeBufferHandling|Clang_OutOfBounds|Clang_ArrayBound",
+    "clogFilter" : "Clog_.*",
+    "fileFilter" : "CWE121.*c$",
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE121_Stack_Based_Buffer_Overflow/output.0"
+}

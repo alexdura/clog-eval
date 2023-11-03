@@ -30,6 +30,8 @@ classifyJulietReport (Report _ _ _ _ _ "CWE-416: Use After Free" _) = CWE416
 classifyJulietReport (Report _ _ _ _ _ "CWE-078: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')" _) = CWE78
 classifyJulietReport (Report _ _ _ _ _ "CWE-476: NULL Pointer Dereference" _) = CWE476
 classifyJulietReport (Report _ _ _ _ _ "CWE-134: Uncontrolled Format String" _) = CWE134
+classifyJulietReport (Report _ _ _ _ _ "CWE-122: Heap-based Buffer Overflow" _) = CWE122
+classifyJulietReport (Report _ _ _ _ _ "CWE-121: Stack-based Buffer Overflow" _) = CWE121
 classifyJulietReport _ = NotRelevant
 
 
