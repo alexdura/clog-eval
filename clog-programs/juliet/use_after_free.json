@@ -1,6 +1,6 @@
 {
     "dir" : "/work/projects/juliet/C/testcases/CWE416_Use_After_Free",
-    "clangXargs" : ["--checks=-clang-analyzer-*,clang-analyzer-unix.Malloc,clang-analyzer-cplusplus.NewDelete"],
+    "clangXargs" : ["--checks=-clang-analyzer-*,clang-analyzer-unix.Malloc"],
     "clogXargs" : [],
     "includes" : ["/work/projects/juliet/C/testcasesupport"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
