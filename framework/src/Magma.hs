@@ -16,6 +16,7 @@ import GHC.Generics
 import System.Directory
 import Text.CSV
 import Text.Regex.TDFA
+import Text.Printf
 import qualified Data.Vector as Vector
 import qualified Clang.CompilationDatabase as CDB
 
@@ -28,7 +29,8 @@ data ProjectOpts = ProjectOpts {
   dir :: FilePath,
   groundTruth :: FilePath,
   includes :: [FilePath],
-  outputDir :: FilePath
+  outputDir :: FilePath,
+  xargs :: [String]
 } deriving (Show, Generic)
 
 
@@ -67,7 +69,7 @@ rules topts popts = do
   patched_compile_commands %> \out -> do
     need [compile_commands]
     Just cdb <- liftIO (decodeFileStrict compile_commands :: IO (Maybe CDB.CompilationDatabase))
-    let patched_cdb = (\e -> e { CDB.arguments = CDB.arguments e >>= \args -> return $ args ++ (pack <$> includes) }) <$> cdb
+    let patched_cdb = (\e -> e { CDB.arguments = CDB.arguments e >>= \args -> return $ args ++ (pack <$> includes) ++ (pack <$> popts.xargs)}) <$> cdb
     liftIO $ encodeFile out patched_cdb
 
   ["clang.analysis.out", "clang.analysis.time"] &%> \[out, time] -> do
@@ -103,6 +105,14 @@ rules topts popts = do
       topts.clogXargs
       topts.clogProgramPath
     writeFile' time (show t)
+
+  phony "stats" $ do
+    need ["clang.analysis.csv", "clog.analysis.csv"]
+    clangReport <- liftIO $ extractReportsCSV "clang.analysis.csv"
+    clogReport <- liftIO $ extractReportsCSV "clog.analysis.csv"
+    liftIO $ putStrLn $ printf "clog reports: %d" (length clogReport)
+    liftIO $ putStrLn $ printf "clang reports: %d" (length clangReport)
+
 
   ["clang.true.positive.csv", "clang.false.positive.csv", "clang.false.negative.csv"] &%> \[otp, ofp, ofn] -> do
     need ["ground.truth.csv", "clang.analysis.csv"]
@@ -194,7 +204,7 @@ runClang :: ToolOpts -> ProjectOpts -> IO ()
 runClang topts popts = do
   createDirectoryIfMissing True popts.outputDir
   withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-    want ["clang.true.positive.csv", "clang.false.positive.csv", "clang.false.negative.csv"]
+    want ["clang.true.positive.csv", "clang.false.positive.csv", "clang.false.negative.csv", "stats"]
     rules topts popts
 
 
@@ -202,5 +212,5 @@ runClog :: ToolOpts -> ProjectOpts -> IO ()
 runClog topts popts = do
   createDirectoryIfMissing True popts.outputDir
   withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-    want ["clog.true.positive.csv", "clog.false.positive.csv", "clog.false.negative.csv"]
+    want ["clog.true.positive.csv", "clog.false.positive.csv", "clog.false.negative.csv", "stats"]
     rules topts popts

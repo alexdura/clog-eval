@@ -35,7 +35,7 @@ data ReportClass = CWE457
                  | Clog_OSCommandInjection
                  | Clog_NullPointerDereference
                  | Clog_UncontrolledFormatString
-                 | Clog_StackBufferOverflow
+                 | Clog_BufferOverflow
                  | Clang_DeadStores
                  | Clang_DeprecatedOrUnsafeBufferHandling
                  | Clang_DereferenceOfUndefinedPointerValue
@@ -76,13 +76,16 @@ reportClassEq CWE476 Clog_NullPointerDereference = True
 reportClassEq CWE134 Clang_DiagnosticFormatSecurity = True
 reportClassEq CWE134 Clog_UncontrolledFormatString = True
 
-reportClassEq CWE122 Clang_OutOfBounds = True
-reportClassEq CWE122 Clang_DeprecatedOrUnsafeBufferHandling = True
-
 reportClassEq CWE121 Clang_OutOfBounds = True
 reportClassEq CWE121 Clang_DeprecatedOrUnsafeBufferHandling = True
 reportClassEq CWE121 Clang_ArrayBound = True
-reportClassEq CWE121 Clog_StackBufferOverflow = True
+reportClassEq CWE121 Clog_BufferOverflow = True
+
+reportClassEq CWE122 Clang_OutOfBounds = True
+reportClassEq CWE122 Clang_DeprecatedOrUnsafeBufferHandling = True
+reportClassEq CWE122 Clang_ArrayBound = True
+reportClassEq CWE122 Clog_BufferOverflow = True
+
 
 reportClassEq r1 r2
   | r1 > r2 = reportClassEq r2 r1

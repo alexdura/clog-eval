@@ -2,6 +2,6 @@
     "dir" : "/work/projects/magma/targets/openssl",
     "groundTruth" : "/work/projects/magma/dataset/openssl/cve_data.json",
     "includes" : [],
-    "xargs" : [],
-    "outputDir" : "/work/projects/magma/output/openssl"
+    "xargs" : ["-DMAGMA_ENABLE_FIXES"],
+    "outputDir" : "/work/projects/magma/output/openssl-fixed"
 }

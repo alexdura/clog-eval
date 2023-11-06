@@ -8,7 +8,10 @@ BufferWriteFunction("snprintf", 0, 1).
 
 
 ExprPointsToArray(e, s) :- e <: alloca($s * sizeof($t)) :>, c_is_integer_literal($s) != 0, s = c_integer_literal_value($s).
+ExprPointsToArray(e, s) :- e <: malloc($s * sizeof($t)) :>, c_is_integer_literal($s) != 0, s = c_integer_literal_value($s).
 ExprPointsToArray(e, s) :- e <: __builtin_alloca($s * sizeof($t)) :>, c_is_integer_literal($s) != 0, s = c_integer_literal_value($s).
+
+
 ExprPointsToArray(e, s) :- e <: ($t) $e :>, ExprPointsToArray($e, s).
 
 

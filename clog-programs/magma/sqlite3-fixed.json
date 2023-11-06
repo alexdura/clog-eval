@@ -2,6 +2,6 @@
     "dir" : "/work/projects/magma/targets/sqlite3",
     "groundTruth" : "/work/projects/magma/dataset/sqlite3/cve_data.json",
     "includes" : [],
-    "xargs" : [],
-    "outputDir" : "/work/projects/magma/output/sqlite3"
+    "xargs" : ["-DMAGMA_ENABLE_FIXES"],
+    "outputDir" : "/work/projects/magma/output/sqlite3-fixed"
 }
