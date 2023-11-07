@@ -1,0 +1,7 @@
+{
+    "dir" : "/work/projects/magma/targets/php",
+    "groundTruth" : "/work/projects/magma/dataset/php/cve_data.json",
+    "includes" : ["/work/projects/llvm-project/build/lib/clang/16/include"],
+    "xargs" : [],
+    "outputDir" : "/work/projects/magma/output/php"
+}

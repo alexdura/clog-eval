@@ -1,0 +1,7 @@
+{
+    "dir" : "/work/projects/magma/targets/libxml2",
+    "groundTruth" : "/work/projects/magma/dataset/libxml2/cve_data.json",
+    "includes" : ["/work/projects/llvm-project/build/lib/clang/16/include"],
+    "xargs" : [],
+    "outputDir" : "/work/projects/magma/output/libxml2"
+}

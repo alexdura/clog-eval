@@ -198,19 +198,22 @@ flatten _ = error "Expecting a dictionary."
 
 classifyMagmaReport :: ReportClassifier
 classifyMagmaReport r | r.desc == "CWE-476" = CWE476
+                      | r.desc == "CWE-20" = CWE20
                       | otherwise = NotRelevant
 
 runClang :: ToolOpts -> ProjectOpts -> IO ()
 runClang topts popts = do
-  createDirectoryIfMissing True popts.outputDir
-  withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
+  let outputDir = popts.outputDir </> takeBaseName topts.clogProgramPath
+  createDirectoryIfMissing True outputDir
+  withCurrentDirectory outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
     want ["clang.true.positive.csv", "clang.false.positive.csv", "clang.false.negative.csv", "stats"]
     rules topts popts
 
 
 runClog :: ToolOpts -> ProjectOpts -> IO ()
 runClog topts popts = do
-  createDirectoryIfMissing True popts.outputDir
-  withCurrentDirectory popts.outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
+  let outputDir = popts.outputDir </> takeBaseName topts.clogProgramPath
+  createDirectoryIfMissing True outputDir
+  withCurrentDirectory outputDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
     want ["clog.true.positive.csv", "clog.false.positive.csv", "clog.false.negative.csv", "stats"]
     rules topts popts

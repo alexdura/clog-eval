@@ -2,10 +2,14 @@
 
 ROOT=`pwd`
 
-declare -a TOOL_CONFIGS=("null_dereference.json")
+# declare -a TOOL_CONFIGS=("null_dereference.json", "uninitialized_variable.json")
+declare -a TOOL_CONFIGS=("uninitialized_variable.json")
 declare -a PROJ_CONFIGS=("libpng"
+                         "libtiff"
                          "openssl"
                          "sqlite3"
+                         "libxml2"
+                         "php"
                         )
 
 for tool in "${TOOL_CONFIGS[@]}"; do

@@ -29,6 +29,7 @@ data ReportClass = CWE457
                  | CWE134
                  | CWE122
                  | CWE121
+                 | CWE20
                  | Clog_UninitializedVarUse
                  | Clog_UninitializedMemRead
                  | Clog_UseAfterFree
@@ -75,6 +76,9 @@ reportClassEq CWE476 Clog_NullPointerDereference = True
 
 reportClassEq CWE134 Clang_DiagnosticFormatSecurity = True
 reportClassEq CWE134 Clog_UncontrolledFormatString = True
+
+reportClassEq CWE20 Clang_DiagnosticFormatSecurity = True
+reportClassEq CWE20 Clog_UncontrolledFormatString = True
 
 reportClassEq CWE121 Clang_OutOfBounds = True
 reportClassEq CWE121 Clang_DeprecatedOrUnsafeBufferHandling = True
