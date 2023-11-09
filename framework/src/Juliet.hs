@@ -32,6 +32,8 @@ classifyJulietReport (Report _ _ _ _ _ "CWE-476: NULL Pointer Dereference" _) = 
 classifyJulietReport (Report _ _ _ _ _ "CWE-134: Uncontrolled Format String" _) = CWE134
 classifyJulietReport (Report _ _ _ _ _ "CWE-122: Heap-based Buffer Overflow" _) = CWE122
 classifyJulietReport (Report _ _ _ _ _ "CWE-121: Stack-based Buffer Overflow" _) = CWE121
+classifyJulietReport (Report _ _ _ _ _ "CWE-126: Buffer Over-read" _) = CWE126
+classifyJulietReport (Report _ _ _ _ _ "CWE-127: Buffer Under-read" _) = CWE127
 classifyJulietReport _ = NotRelevant
 
 
