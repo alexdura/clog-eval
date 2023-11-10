@@ -32,6 +32,7 @@ data ReportClass = CWE457
                  | CWE20
                  | CWE126
                  | CWE127
+                 | CWE124
                  | Clog_UninitializedVarUse
                  | Clog_UninitializedMemRead
                  | Clog_UseAfterFree
@@ -41,6 +42,7 @@ data ReportClass = CWE457
                  | Clog_BufferOverflow
                  | Clog_BufferOverread
                  | Clog_BufferUnderread
+                 | Clog_BufferUnderwrite
                  | Clang_DeadStores
                  | Clang_DeprecatedOrUnsafeBufferHandling
                  | Clang_DereferenceOfUndefinedPointerValue
@@ -103,6 +105,11 @@ reportClassEq CWE127 Clang_OutOfBounds = True
 reportClassEq CWE127 Clang_DeprecatedOrUnsafeBufferHandling = True
 reportClassEq CWE127 Clang_ArrayBound = True
 reportClassEq CWE127 Clog_BufferUnderread = True
+
+reportClassEq CWE124 Clang_OutOfBounds = True
+reportClassEq CWE124 Clang_DeprecatedOrUnsafeBufferHandling = True
+reportClassEq CWE124 Clang_ArrayBound = True
+reportClassEq CWE124 Clog_BufferUnderwrite = True
 
 
 

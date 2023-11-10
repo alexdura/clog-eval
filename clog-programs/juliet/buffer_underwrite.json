@@ -1,0 +1,14 @@
+{
+    "dir" : "/work/projects/juliet/C/testcases/CWE124_Buffer_Underwrite",
+    "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer*,clang-analyzer-alpha.security.ArrayBound,clang-analyzer-alpha.security.ArrayBoundV2,clang-analyzer-alpha.security.taint.*,clang-analyzer-alpha.unix.cstring.OutOfBounds,clang-analyzer-security.insecureAPI.*"],
+    "clogXargs" : [],
+    "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/buffer_underwrite.0.mdl",
+    "manifest" : "/work/projects/juliet/C/manifest.xml",
+    "manifestFilter" : "CWE124.*",
+    "clangFilter" : "Clang_DeprecatedOrUnsafeBufferHandling|Clang_OutOfBounds|Clang_ArrayBound",
+    "clogFilter" : "Clog_BufferUnderwrite",
+    "fileFilter" : "CWE124.*c$",
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE124_Buffer_Underwrite/output.0"
+}
