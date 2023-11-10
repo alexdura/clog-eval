@@ -40,6 +40,7 @@ data ReportClass = CWE457
                  | Clog_UncontrolledFormatString
                  | Clog_BufferOverflow
                  | Clog_BufferOverread
+                 | Clog_BufferUnderread
                  | Clang_DeadStores
                  | Clang_DeprecatedOrUnsafeBufferHandling
                  | Clang_DereferenceOfUndefinedPointerValue
@@ -97,6 +98,11 @@ reportClassEq CWE126 Clang_OutOfBounds = True
 reportClassEq CWE126 Clang_DeprecatedOrUnsafeBufferHandling = True
 reportClassEq CWE126 Clang_ArrayBound = True
 reportClassEq CWE126 Clog_BufferOverread = True
+
+reportClassEq CWE127 Clang_OutOfBounds = True
+reportClassEq CWE127 Clang_DeprecatedOrUnsafeBufferHandling = True
+reportClassEq CWE127 Clang_ArrayBound = True
+reportClassEq CWE127 Clog_BufferUnderread = True
 
 
 

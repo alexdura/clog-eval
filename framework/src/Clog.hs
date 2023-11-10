@@ -14,3 +14,4 @@ classifyClogReport r | r.desc == "UninitializedMemRead" = Clog_UninitializedMemR
                      | r.desc == "UncontrolledFormatString" = Clog_UncontrolledFormatString
                      | r.desc == "StackBufferOverflow" = Clog_BufferOverflow
                      | r.desc == "BufferOverread" = Clog_BufferOverread
+                     | r.desc == "BufferUnderread" = Clog_BufferUnderread

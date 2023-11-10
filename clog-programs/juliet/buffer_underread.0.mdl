@@ -1,0 +1,33 @@
+
+BufferWriteFunction(name, write_buf, write_size) :- 0 != 0, write_size = 0, write_buf = 0, name = "".
+
+// VarArgRange(0).
+// VarArgRange(i) :- VarArgRange(j), i = j + 1, i <= 100.
+
+// BufferWriteFunction("snprintf", 0, 1).
+
+
+ExprPointsToArray(e, s) :- e <: alloca($s * sizeof($t)) :>, c_is_integer_literal($s) != 0, s = c_integer_literal_value($s).
+ExprPointsToArray(e, s) :- e <: malloc($s * sizeof($t)) :>, c_is_integer_literal($s) != 0, s = c_integer_literal_value($s).
+ExprPointsToArray(e, s) :- e <: __builtin_alloca($s * sizeof($t)) :>, c_is_integer_literal($s) != 0, s = c_integer_literal_value($s).
+ExprPointsToArray(e, s) :- e <: ($t) $e :>, ExprPointsToArray($e, s).
+
+VarPointsToArray($v, 100) :- <: $t $v[100] :>.
+VarPointsToArray($v, s) :- <: $t $v = $e :>, ExprPointsToArray($e, s).
+VarPointsToArray(v, s) :- <: $v = $e :>, ExprPointsToArray($e, s), v = c_decl($v), node_to_id(v) != 0.
+ExprPointsToArray($v, s) :- <: $v :>, v = c_decl($v), VarPointsToArray(v, s).
+
+ExprPointsBeforeArray(e) :- e <: $p - $n :>, ExprPointsToArray($p, _), c_is_integer_literal($n) != 0, c_integer_literal_value($n) > 0.
+ExprPointsBeforeArray(e) :- e <: $p - $n :>, ExprPointsBeforeArray($p), c_is_integer_literal($n) != 0, c_integer_literal_value($n) > 0.
+VarPointsBeforeArray($v) :- <: $t $v = $e :>, ExprPointsBeforeArray($e).
+VarPointsBeforeArray(v) :- <: $v = $e :>, ExprPointsBeforeArray($e), v = c_decl($v), node_to_id(v) != 0.
+ExprPointsBeforeArray($v) :- <: $v :>, v = c_decl($v), VarPointsBeforeArray(v).
+
+BufferUnderread(c) :- c <: memcpy($dst, $src, $size) :>, ExprPointsBeforeArray($src).
+BufferUnderread(c) :- c <: memmove($dst, $src, $size) :>, ExprPointsBeforeArray($src).
+BufferUnderread(c) :- c <: strncat($dst, $src, $size) :>, ExprPointsBeforeArray($src).
+BufferUnderread(c) :- c <: strncpy($dst, $src, $size) :>, ExprPointsBeforeArray($src).
+
+WarnBufferUnderread(f, l, c, "BufferUnderread") :- BufferUnderread(e), f = c_src_file(e), l = c_src_line_start(e), c = c_src_col_start(e).
+
+OUTPUT('WarnBufferUnderread, "clog.analysis.csv", "csv").
