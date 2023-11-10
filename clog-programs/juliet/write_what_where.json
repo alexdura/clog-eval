@@ -1,0 +1,14 @@
+{
+    "dir" : "/work/projects/juliet/C/testcases/CWE123_Write_What_Where_Condition",
+    "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer*,clang-analyzer-alpha.security.ArrayBound,clang-analyzer-alpha.security.ArrayBoundV2,clang-analyzer-alpha.security.taint.*,clang-analyzer-alpha.unix.cstring.OutOfBounds,clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling"],
+    "clogXargs" : [],
+    "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/buffer_overread.0.mdl",
+    "manifest" : "/work/projects/juliet/C/manifest.xml",
+    "manifestFilter" : ".*",
+    "clangFilter" : "Clang_*",
+    "clogFilter" : "Clog_*",
+    "fileFilter" : "CWE123.*c$",
+    "outputDir" : "/work/projects/juliet/C/testcases/CWE123_Write_What_Where_Condition/output.0"
+}
