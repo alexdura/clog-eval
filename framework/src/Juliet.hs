@@ -113,11 +113,13 @@ rules opts = do
   -- clasify the Clog reports between true positive and false positives
   ["clog.true.positive.csv",
    "clog.false.positive.csv",
-   "clog.false.negative.csv"] &%> \[tpCsv,fpCsv, fnCsv] -> do
+   "clog.false.negative.csv",
+   "ground.csv"] &%> \[tpCsv,fpCsv, fnCsv, gCsv] -> do
     need ["clog.analysis.csv"]
     clogReport <- liftIO $ extractReportsCSV "clog.analysis.csv" -- extract the report produced by clog
     groundReport <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
-    dumpStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport tpCsv fpCsv fnCsv
+    dumpStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clogFilter classifyClogReport groundReport clogReport
+      tpCsv fpCsv fnCsv (Just gCsv)
 
   -- clasify the Clang reports between true positive and false positives
   ["clang.true.positive.csv",
@@ -126,7 +128,8 @@ rules opts = do
     need ["clang.analysis.csv"]
     clangReport <- liftIO $ extractReportsCSV "clang.analysis.csv" -- extract the report produced by clang
     groundReport <- liftIO $ extractReportsXML opts.manifest -- extract the ground truth
-    dumpStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport tpCsv fpCsv fnCsv
+    dumpStats opts.fileFilter opts.fileExcludeFilter opts.manifestFilter opts.clangFilter classifyClangReport groundReport clangReport
+      tpCsv fpCsv fnCsv Nothing
 
 
   -- post-process the output of the Clang static analyzer
@@ -222,8 +225,9 @@ dumpStats :: String -- file filter
            -> FilePath -- true positive
            -> FilePath -- false positive
            -> FilePath -- flase negative
+           -> Maybe FilePath -- ground
            -> Action ()
-dumpStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  groundReport toolReport tpCsv fpCsv fnCsv = do
+dumpStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  groundReport toolReport tpCsv fpCsv fnCsv groundCsv = do
   let relevantG = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
                            && show (classifyJulietReport rep) =~ manifestFilter) groundReport
       relevantR = filter (\rep -> rep.file =~ fileFilter && (isNothing fileExcludeFilter || not (rep.file =~ fromJust fileExcludeFilter))
@@ -237,6 +241,9 @@ dumpStats fileFilter fileExcludeFilter manifestFilter reportFilter classifier  g
     writeFile' tpCsv (printCSV $ map toCsvLine tp)
     writeFile' fpCsv (printCSV $ map toCsvLine fp)
     writeFile' fnCsv (printCSV $ map toCsvLine fn)
+    if (isJust groundCsv) then writeFile' (fromJust groundCsv) (printCSV $ map toCsvLine relevantG)
+      else pure ()
+
 
 runClang :: JulietOpts -> IO ()
 runClang opts = do
@@ -251,7 +258,7 @@ runClog opts = do
   let buildDir = opts.dir </> opts.outputDir
   createDirectoryIfMissing True buildDir
   withCurrentDirectory buildDir $ shake shakeOptions {shakeVerbosity=Verbose} $ do
-    want $ "clang-clog-compare" : "stats-clog" : "stats-clang" : ["clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
+    want $ "clang-clog-compare" : "stats-clog" : "stats-clang" : ["ground.csv", "clog.true.positive.csv", "clog.false.positive.csv", "clog.analysis.csv"]
     rules opts
 
 extractReportXML :: ArrowXml a => a XmlTree (Report)
