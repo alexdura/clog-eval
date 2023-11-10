@@ -15,6 +15,8 @@ ExprPointsToArray(e, s) :- e <: __builtin_alloca($s * sizeof($t)) :>, c_is_integ
 ExprPointsToArray(e, s) :- e <: ($t) $e :>, ExprPointsToArray($e, s).
 
 
+VarPointsToArray($v, 100) :- <: $t $v[100] :>.
+// VarPointsToArray($v, 50) :- <: $t $v[50] :>.
 VarPointsToArray($v, s) :- <: $t $v = $e :>, ExprPointsToArray($e, s).
 VarPointsToArray(v, s) :- <: $v = $e :>, ExprPointsToArray($e, s), v = c_decl($v), node_to_id(v) != 0.
 ExprPointsToArray($v, s) :- <: $v :>, v = c_decl($v), VarPointsToArray(v, s).
@@ -28,11 +30,14 @@ BufferOverflow(c) :- c <: $f(.., $arg1, .., $arg2, ..) :>, name = c_name($f), Bu
                   buf_size < write_size.
 
 NElem(e, 1) :- e <: sizeof($w) :>.
+NElem(e, n) :- e <: strlen($s) :>, s = c_decl($s), node_to_id(s) != 0, VarPointsToArray(s, n).
+NElem(e, n) :- e <: wcslen($s) :>, s = c_decl($s), node_to_id(s) != 0, VarPointsToArray(s, n).
 NElem(e, n) :- e <: $t1 * $t2 :>, c_is_integer_literal($t1) != 0, n1 = c_integer_literal_value($t1), NElem($t2, n2), n = n1 * n2.
 NElem(e, n) :- e <: $t1 * $t2 :>, c_is_integer_literal($t2) != 0, n2 = c_integer_literal_value($t2), NElem($t1, n1), n = n1 * n2.
-
+NElem(e, n) :- e <: $t1 * $t2 :>, NElem($t1, n1), NElem($t2, n2), n = n1 * n2.
 
 BufferOverflow(c) :- c <: memcpy($dst, $src, $size) :>, ExprPointsToArray($dst, dst_size), NElem($size, n), n > dst_size.
+BufferOverflow(c) :- c <: memmove($dst, $src, $size) :>, ExprPointsToArray($dst, dst_size), NElem($size, n), n > dst_size.
 BufferOverflow(c) :- c <: strncat($dst, $src, $size) :>, ExprPointsToArray($dst, dst_size),
                      c_is_integer_literal($size) != 0, size = c_integer_literal_value($size), size > dst_size.
 
