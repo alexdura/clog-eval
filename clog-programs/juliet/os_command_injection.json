@@ -2,7 +2,7 @@
     "dir" : "/work/projects/juliet/C/testcases/CWE78_OS_Command_Injection",
     "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer-*,clang-analyzer-alpha.security.taint.*"],
     "clogXargs" : [],
-    "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build/lib/clang/16/include"],
+    "includes" : ["/work/projects/juliet/C/testcasesupport", "/work/projects/llvm-project/build-release/lib/clang/16/include"],
     "clogJar" : "/work/projects/metadl/compiler.jar",
     "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/os_command_injection.4.mdl",
     "manifest" : "/work/projects/juliet/C/manifest.xml",
