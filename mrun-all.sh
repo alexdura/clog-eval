@@ -2,8 +2,13 @@
 
 ROOT=`pwd`
 
-# declare -a TOOL_CONFIGS=("null_dereference.json", "uninitialized_variable.json")
-declare -a TOOL_CONFIGS=("uninitialized_variable.json")
+declare -a TOOL_CONFIGS=("null_dereference.json"
+                         "use_after_free.json"
+                         "uninitialized_variable.json"
+                         "os_command_injection.json"
+                         "uncontrolled_format_string.json"
+                        )
+# declare -a TOOL_CONFIGS=("uninitialized_variable.json")
 declare -a PROJ_CONFIGS=("libpng"
                          "libtiff"
                          "openssl"

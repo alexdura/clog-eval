@@ -1,0 +1,10 @@
+{
+    "clangXargs" : ["--checks=-clang-analyzer-*,clang-analyzer-unix.Malloc"],
+    "clogXargs" : [],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/use_after_free.3.mdl",
+    "clogUtilPath" : "/work/projects/clog-eval/clog-programs/util/function_ranges.mdl",
+    "clangFilter" : "Clang_UseAfterFree",
+    "clogFilter" : "Clog_UseAfterFree",
+    "groundTruthFilter" : ".*"
+}

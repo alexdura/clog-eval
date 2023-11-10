@@ -1,6 +1,6 @@
 {
     "clangXargs" : ["--checks=-clang-analyzer-*,clang-analyzer-core.CallAndMessage,clang-analyzer-core.uninitialized.*"],
-    "clogXargs" : ["-P", "profile.json"],
+    "clogXargs" : [],
     "clogJar" : "/work/projects/metadl/compiler.jar",
     "clogProgramPath" : "/work/projects/clog-eval/clog-programs/magma/uninitialized_variable.0.mdl",
     "clogUtilPath" : "/work/projects/clog-eval/clog-programs/util/function_ranges.mdl",

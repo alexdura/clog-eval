@@ -1,0 +1,10 @@
+{
+    "clangXargs" : ["--allow-enabling-analyzer-alpha-checkers", "--checks=-clang-analyzer-*,clang-analyzer-alpha.security.taint.*"],
+    "clogXargs" : [],
+    "clogJar" : "/work/projects/metadl/compiler.jar",
+    "clogProgramPath" : "/work/projects/clog-eval/clog-programs/juliet/os_command_injection.4.mdl",
+    "clogUtilPath" : "/work/projects/clog-eval/clog-programs/util/function_ranges.mdl",
+    "clangFilter" : "Clang_OSCommandInjection",
+    "clogFilter" : "Clog_OSCommandInjection",
+    "groundTruthFilter" : ".*"
+}
