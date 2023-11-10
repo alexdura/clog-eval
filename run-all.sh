@@ -45,6 +45,6 @@ RESULT_FILE=juliet-results.tex
 echo "" > $RESULT_FILE
 
 for config in "${CONFIGS[@]}"; do
-    # ./run.sh $JULIET/$config
+    ./run.sh $JULIET/$config
     collect_results $JULIET/$config $RESULT_FILE
 done
