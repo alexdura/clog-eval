@@ -6,21 +6,33 @@ import Report
 import Data.List.Split
 import Data.Maybe
 import Text.Regex.TDFA
-
+import Control.Applicative
 
 
 processClangTidyOutput :: [String] -> [Report]
 processClangTidyOutput outs = let chunks = split (dropInitBlank $ keepDelimsL $ whenElt (isJust . extractReportClang)) outs in
-                                (\(h:t) -> let r = fromJust $ extractReportClang h in r { desc = foldl (++) r.desc t}) <$> chunks
-
+                                (\(h:t) -> let r = fromMaybe (error h) $ extractReportClang h in r { desc = foldl (++) r.desc t}) <$> chunks
 
 extractReportClang :: String -> Maybe Report
-extractReportClang l = do
+extractReportClang s = (extractReportClang1 s) <|> (extractReportClang2 s)
+
+
+extractReportClang1 :: String -> Maybe Report
+extractReportClang1 l = do
   (_, _, _, [f, l, c, k, m]) <- l =~~ "(.+):(.+):(.+): (.+): (.+)" :: Maybe (String, String, String, [String])
   return $ simpleReport f (read l) (read c) m (case k of
                                                   "warning" -> WarningReport
                                                   "error" -> ErrorReport
                                                   _ -> OtherReport)
+
+extractReportClang2 :: String -> Maybe Report
+extractReportClang2 l = do
+  (_, _, _, [k, f, m]) <- l =~~ "(.+): (.+): (.+)" :: Maybe (String, String, String, [String])
+  return $ simpleReport f 0 0 m (case k of
+                                    "warning" -> WarningReport
+                                    "error" -> ErrorReport
+                                    _ -> OtherReport)
+
 
 extractChecker :: Report -> Maybe String
 extractChecker (Report _ _ _ _ _ desc WarningReport) = do
@@ -55,4 +67,7 @@ classifyClangReport r
   | r.desc =~ "variable(.*)\\[clang-diagnostic-uninitialized\\]" = Clang_DiagnosticUninitialized
   | r.desc =~ "(.*)\\[clang-analyzer-alpha.unix.cstring.OutOfBounds\\]" = Clang_OutOfBounds
   | r.desc =~ "(.*)\\[clang-analyzer-alpha.security.ArrayBound\\]" = Clang_ArrayBound
+  | r.desc =~ "(.*)\\[clang-diagnostic-unused-command-line-argument\\]" = NotRelevant
+  | r.desc =~ "(.*)\\[clang-diagnostic-cast-align\\]" = NotRelevant
+  | r.desc =~ "(.*)\\[clang-diagnostic-unused-parameter\\]" = NotRelevant
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"
