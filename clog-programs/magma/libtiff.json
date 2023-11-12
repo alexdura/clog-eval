@@ -1,7 +1,7 @@
 {
     "dir" : "/work/projects/magma/targets/libtiff",
     "groundTruth" : "/work/projects/magma/dataset/libtiff/cve_data.json",
-    "includes" : ["/work/projects/llvm-project/build-release/lib/clang/16/include"],
+    "includes" : ["/work/projects/llvm-project/build-release/lib/clang/16/include", "/work/projects/magma/targets/libtiff/repo/libtiff"],
     "xargs" : [],
     "outputDir" : "/work/projects/magma/output/libtiff"
 }
