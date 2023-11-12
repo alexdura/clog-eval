@@ -1,7 +1,7 @@
 {
     "dir" : "/work/projects/magma/targets/openssl",
     "groundTruth" : "/work/projects/magma/dataset/openssl/cve_data.json",
-    "includes" : [],
+    "includes" : ["/work/projects/llvm-project/build-release/lib/clang/16/include"],
     "xargs" : [],
     "outputDir" : "/work/projects/magma/output/openssl"
 }
