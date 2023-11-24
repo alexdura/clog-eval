@@ -70,4 +70,6 @@ classifyClangReport r
   | r.desc =~ "(.*)\\[clang-diagnostic-unused-command-line-argument\\]" = NotRelevant
   | r.desc =~ "(.*)\\[clang-diagnostic-cast-align\\]" = NotRelevant
   | r.desc =~ "(.*)\\[clang-diagnostic-unused-parameter\\]" = NotRelevant
+  | r.desc =~ "(.*)\\[clang-analyzer-core.uninitialized.Branch\\]" = Clang_UninitializedBranch
+  | r.desc =~ "(.*)Called function pointer is null \\(null dereference\\) \\[clang-analyzer-core.CallAndMessage\\]" = Clang_NullDereference
   | otherwise = error $ "Can't classify Clang report: '" ++ r.desc ++ "'"

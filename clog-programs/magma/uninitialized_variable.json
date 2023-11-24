@@ -4,7 +4,7 @@
     "clogJar" : "/work/projects/metadl/compiler.jar",
     "clogProgramPath" : "/work/projects/clog-eval/clog-programs/magma/uninitialized_variable.0.mdl",
     "clogUtilPath" : "/work/projects/clog-eval/clog-programs/util/function_ranges.mdl",
-    "clangFilter" : "Clang_UninitializedCallArgument|Clang_DereferenceOfUndefinedPointerValue",
+    "clangFilter" : "Clang_UninitializedCallArgument|Clang_DereferenceOfUndefinedPointerValue|Clang_UninitializedBranch",
     "clogFilter" : "Clog_UninitializedVarUse|Clog_UninitializedMemRead",
     "groundTruthFilter" : ".*"
 }

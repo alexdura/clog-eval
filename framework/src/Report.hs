@@ -61,6 +61,7 @@ data ReportClass = CWE457
                  | Clang_DiagnosticUninitialized
                  | Clang_OutOfBounds
                  | Clang_ArrayBound
+                 | Clang_UninitializedBranch
                  | NotRelevant
                  deriving (Eq, Show, Ord)
 
@@ -71,6 +72,7 @@ reportClassEq CWE457 Clog_UninitializedVarUse = True
 reportClassEq CWE457 Clang_UninitializedCallArgument = True
 reportClassEq CWE457 Clang_DereferenceOfUndefinedPointerValue = True
 reportClassEq CWE457 Clang_DiagnosticUninitialized = True
+reportClassEq CWE457 Clang_UninitializedBranch = True
 
 reportClassEq CWE416 Clang_UseAfterFree = True
 reportClassEq CWE416 Clog_UseAfterFree = True
