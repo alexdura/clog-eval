@@ -51,7 +51,8 @@ collect_results() {
 }
 
 RESULT_FILE=juliet-results.tex
-STATS_FILE=juliet-stats.tex
+
+STATS_FILE=clog-src-stats.tex
 
 echo "" > $RESULT_FILE
 echo "" > $STATS_FILE

@@ -20,7 +20,7 @@ declare -a PROJ_CONFIGS=(
     "libxml2"
 )
 
-RESULT_FILE=juliet-results.txt
+RESULT_FILE=magma-results.txt
 echo "tool,proj,n_clang,n_clang_fixed,n_clog,n_clog_fixed,clog_time,clang_time" > $RESULT_FILE
 
 for tool in "${TOOL_CONFIGS[@]}"; do
