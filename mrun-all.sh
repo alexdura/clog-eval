@@ -9,8 +9,6 @@ ROOT=`pwd`
 declare -a TOOL_CONFIGS=(
     "null_dereference.json"
     "use_after_free.json"
-    "os_command_injection.json"
-    "uncontrolled_format_string.json"
 )
 
 declare -a PROJ_CONFIGS=(
