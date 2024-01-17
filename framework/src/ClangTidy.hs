@@ -45,6 +45,7 @@ classifyClangReport r
   | r.desc =~ "function call argument is an uninitialized value(.*)\\[clang-analyzer-core.CallAndMessage]" = Clang_UninitializedCallArgument
   | r.desc =~ "Dereference of undefined pointer value(.*)\\[clang-analyzer-core.NullDereference]" = Clang_DereferenceOfUndefinedPointerValue
   | r.desc =~ "Potential leak of memory(.*)\\[clang-analyzer-unix.Malloc\\]" = Clang_PotentialLeakOfMemory
+  | r.desc =~ "Potential memory leak(.*)\\[clang-analyzer-unix.Malloc\\]" = Clang_PotentialLeakOfMemory
   | r.desc =~ "Access to field (.*) results in a dereference of an undefined\
               \ pointer value (.*)\\[clang-analyzer-core.NullDereference\\]" = Clang_DereferenceOfUndefinedPointerValue
   | r.desc =~ "Use of memory after it is freed \\[clang-analyzer-unix.Malloc\\]" = Clang_UseAfterFree
